@@ -1,0 +1,179 @@
+#map{
+    height: 750px;
+    width: 100%;
+    border: 1px solid black;
+
+}
+
+
+.filterTitle{
+    width: 100%;
+    text-align: left;
+    font-family: 'Quicksand', sans-seriff;
+    background-color: white;
+    border:none;
+    border-top: 1px solid rgb(216, 216, 216);
+    border-bottom: 1px solid rgb(216, 216, 216); 
+    font-size: 20px;
+}
+
+
+.filterTitle:hover{
+    background-color: rgb(197, 197, 197);
+}
+
+.filterTitle:after {
+    content: '\002B';
+    color: black;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+}
+
+.active:after {
+    content: "\2212";
+}
+
+.filterSection{
+    margin: 0;
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: #f1f1f1;
+}
+
+
+
+.filterLabel{
+    font-family: 'Quicksand', sans-seriff;
+    text-transform: capitalize;
+    clear: none;
+    display: inline-block;
+
+}
+
+#radioBtnForm{
+    position: relative;
+    bottom: 50px;
+}
+
+
+.checkboxCtn{
+    width: 100%;
+}
+
+.header{
+    text-decoration: underline;
+    font-family: 'Quicksand', sans-seriff;
+    top: 50px;
+    float: left;
+
+    
+}
+.clearBtn{
+    background-color: #f1f1f1;
+    font-family: 'Quicksand', sans-seriff;
+    color: grey;
+    float: right;
+    border: none;
+    margin: 0;
+    padding: 0;
+
+}
+
+.clearBtn:hover{
+    color: black;
+    text-decoration: underline;
+}
+
+.clearBtn:active{
+    border: none;
+    color: black;
+    text-decoration: underline;
+}
+
+#seeAllBtn{
+    background-color: white;
+    margin-top: 25px;
+
+}
+.headerAndBtnContainer{
+    display: inline-block;
+    width: 100%;
+}
+
+
+.filterAppliedText{
+    color: black;
+    font-family: 'Quicksand', sans-seriff;
+    margin: 5px;
+    padding: 5px;
+    background-color: #e9e9e9;
+    display: inline-block;
+    cursor: pointer;
+    text-transform: capitalize;
+    border: 1px solid #bababa;
+}
+
+.filterAppliedText:hover{
+    background-color: #bababa;
+    transition: 0.3s;
+}
+
+#noFiltersMsg{
+    font-family: 'Quicksand', sans-seriff;
+    color: black;
+    text-emphasis: 300;
+}
+
+select{
+    width: 100%;
+}
+
+.userGeolocationMsg{
+	color: red;
+	font-family: 'Quicksand', sans-seriff;
+	margin: 0;
+	display: block;
+
+}
+
+.noSearchError{
+	color: red;
+	font-family: 'Quicksand', sans-seriff;
+	margin: 0;
+    display: block;
+    position: relative;
+    bottom: 25px;
+
+}
+
+#search_boxMap{
+	height: 25px;
+	width: 75%;
+    display: inline;
+    margin-top: 5px;
+    margin-right: 0;
+}
+
+#search_submitMap{
+    height: 25px;
+    width: 23%; 
+    display: inline;
+    margin-top: 5px;
+    margin-left: 0;
+}
+
+#storeFilterCheckboxCtn{
+    height: auto;
+
+}
+
+#distanceSelect{
+    font-family: 'Quicksand', sans-seriff;
+    padding: 5px;
+}
+
+
+
