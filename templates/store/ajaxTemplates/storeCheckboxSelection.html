@@ -1,0 +1,180 @@
+
+{% if qStores != "None" %}
+    {% for selectedStore in qStores %}
+        <input type="checkbox" class="filterInput checkboxBtn storeCheckbox" name="storeID" value="{{selectedStore.id}}" id="store_{{selectedStore.sName}}"> 
+        <label class="filterLabel" for="store_{{selectedStore.sName}}">{{selectedStore.sName}}</label>
+        <br>
+    {% endfor %}   
+{% else %}
+    <p>No store locations</p>
+    <!--empty, used for call invocation-->
+    <input type="checkbox" style="display:none" class="filterInput checkboxBtn storeCheckbox" name="storeID" > 
+{% endif %}
+
+
+<script>
+    $('.storeCheckbox').on('change', function(){
+        var checkedRadioID = [];
+        var checkedCategoryID = [];
+        var checkedStoreID = [];
+
+        //-----------------------Add filter button at top--------------------------
+        if (document.getElementById("statusOfFilter").innerHTML != "clearBtnCall"){
+            if (document.getElementById("noFiltersMsg")){
+                document.getElementById("noFiltersMsg").remove();
+            }
+            if(this.checked==false){   
+                document.getElementById("appliedStoreFilter_"+this.value).remove();    
+            }
+            else if (this.checked==true){
+                var textFilterVal = document.createElement("button");
+                textFilterVal.innerHTML = this.id.split("_")[1];
+                textFilterVal.id = "appliedStoreFilter_"+this.value;
+                textFilterVal.classList = "storeFilterApplied filterAppliedText";   
+                document.getElementById("appliedFilters").appendChild(textFilterVal);
+            }
+            
+            $('.filterAppliedText').each(function(){
+                if (this.classList.contains("storeFilterApplied")==true){
+                    IDvalue = this.id.split("_")[1];
+                    checkedStoreID.push(IDvalue);
+                }
+            });
+
+            
+        }
+
+
+
+        //---------------------Generate List to send to ajax-----------------------
+        $('.filterAppliedText').each(function(){
+            if (this.classList.contains("cityFilterApplied")==true){
+                IDvalue = this.id.split("_")[1];
+                checkedRadioID.push(IDvalue);
+            }
+            else if (this.classList.contains("categoryFilterApplied")==true){
+                IDvalue = this.id.split("_")[1];
+                checkedCategoryID.push(IDvalue);
+            }
+        });
+
+        
+
+
+        if ((document.getElementsByClassName("filterAppliedText").length == 0) && !(document.getElementById("noFiltersMsg"))){
+            var noFilters = document.createElement("p");
+            noFilters.id = "noFiltersMsg";
+            noFilters.innerHTML = "No Filters Selected";
+            document.getElementById("appliedFilters").appendChild(noFilters);
+        }
+        alert('checkedStoreID: '+checkedStoreID);
+                
+        $.ajax({
+            url: '/stores/map/filterMapAjax/',
+            data: {
+                'seeAll': 'false',
+                'checkedRadioID': checkedRadioID,
+                'checkedCategoryID': checkedCategoryID,
+                'checkedStoreID': checkedStoreID,
+            
+                //TESTING--------------------------------------------
+                'userLat': document.getElementById("userLat").innerHTML,
+                'userLng': document.getElementById("userLng").innerHTML,
+                'distanceValue': document.getElementById("distanceSelect").value,
+                //---------------------------------------------------            
+            
+            },
+            type: "GET",
+            success: function (data){
+                var marker;
+                for (var i = 0; i < markers.length; i++) {
+                    markers[i].setMap(null);
+                }
+                markers = [];
+
+                markerClusters.clearMarkers();
+
+                if (data.qStoreLocation != "None"){
+                    for (var i = 0; i < data.qStoreLocation.length; i++){
+                        var icon = {
+                            url: data.qStorePicsToLoc[i], // url
+                            scaledSize: new google.maps.Size(40, 40), // scaled size
+                        };
+                        marker = new google.maps.Marker({
+                            position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                            icon: icon,
+                            map: map
+                        });
+                        var infowindow = new google.maps.InfoWindow();
+                            
+                        var contentSlug = data.qStoreSlugs[i];
+                        var contentStoreID = data.qStoreIDsForInfoBox[i];
+                            
+                        var contentURL = "{% url 'store:storePage' store_Slug=123 store_Id=0 %}".replace (/123/, contentSlug).replace(/0/, contentStoreID);
+                        var contentURLAddedForm = "?storeLoc=" + data.qStoreLocation[i].id + "&filterBtn=Filter";
+                        content ='<div id="content">' +
+                            '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                            '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +
+                            '<p> Phone: ' + data.qPhoneNum[i] + '</p>'+ '<a href=' + contentURL+contentURLAddedForm + '>' +
+                            'Link to Store Page </a>' +
+                            '</div>'; 
+                            
+                        google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                            return function() {
+                                closeInfos();
+                                infowindow.setContent(content);
+                                infowindow.open(map,marker);
+                                infos[0]=infowindow;
+                            };
+                        })(marker,content,infowindow)); 
+                        
+                        markers.push(marker);
+
+                    }
+                    markerClusters = new MarkerClusterer(map, markers,
+                        {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                    );
+                }
+                else{
+                    alert("No Results");
+                }
+
+
+                if(document.getElementById("statusOfFilter").innerHTML != "status"){
+                    document.getElementById("statusOfFilter").innerHTML = "status";
+                    $.ajax({
+                        url: '/stores/map/ajaxStoreCheckboxFilter/',
+                        data:{
+                            'qStoreIDs': data.qStoreIDs
+                        },
+                        success: function(data){
+                            $("#storeFilterCheckboxCtn").html(data);                                   
+                            
+                                    
+                            //when updating store checkbox filter list, check boxes that already have filter applied
+                            var storeFiltersAppliedArray = [];
+                            $('.storeFilterApplied').each(function(){
+                                storeFiltersAppliedArray.push("store_"+this.innerHTML);
+                            });
+                            $(storeFiltersAppliedArray).each(function(index, value){
+                                document.getElementById(value).checked = true;
+                            });
+                            //-------------------------------------------------------------------------------------
+                        
+                            document.getElementById("storeFilterCheckboxCtn").style.height="auto";
+                        
+                        },
+                        error: function(data){
+                            alert("Cannot update store checkboxes");
+                        },
+                    });
+                }
+                document.getElementById("statusOfFilter").innerHTML = "status";
+            },
+            error: function(data){
+                alert("Error: please refresh page");
+                document.getElementById("statusOfFilter").innerHTML = "status";
+            }
+        });
+    });
+</script>
