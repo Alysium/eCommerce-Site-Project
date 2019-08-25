@@ -1,0 +1,56 @@
+{%  extends  'base.html' %}
+{% load static %}
+{% load customTemplateStores %}
+
+
+<html>
+	<head>
+		{%block cssFiles%}
+			<link rel="stylesheet" type="text/css" href="{% static 'categories/styleCategories.css' %}" />
+		{%endblock%}
+		<title>{% block title %} SMPLY: Categories {% endblock %}</title>
+	
+	</head>
+	
+
+	
+	
+	{% block body %}
+	<body>
+		<h1 class="title">Categories</h1>
+		<table>
+			{% for counter in looped|times %}
+				<tr>
+					{% with counter|mul:4 as multiplied %}
+					{%for counter2 in numberOfCol|times %}
+						{% if counter2|adder:multiplied >= size %}
+							<td></td>
+						{% else %}
+							{% with counter2|adder:multiplied as indexPos %}
+							{% with allCategory|index:indexPos as selected %}
+							<td>
+								<div class="section">
+									<h4 class="sectionTitle">{{selected.cName}}</h4>
+									{% for subCat in allSubcat %}
+										{% if subCat.PCategory == selected %}
+											<a class="link" href="#">{{ subCat.scName }} </a>
+										{% endif %}
+									{% endfor %}
+								</div>
+							</td>
+							{% endwith %}
+							{% endwith %}
+						{% endif %}
+					{% endfor %}
+					{% endwith %}
+				</tr>
+			{% endfor %}
+		</table>
+
+	
+	</body>
+	{% endblock %}
+
+
+
+</html>

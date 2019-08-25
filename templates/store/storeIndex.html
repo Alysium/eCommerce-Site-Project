@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load customTemplateStores %}
+
+<html>
+	<head>
+		{% block cssFiles%}
+			<script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+			<link rel="stylesheet" type="text/css" href="{% static 'store/styleStore.css' %}" />
+		{% endblock %}
+		<title>{% block title %} SMPLY: Stores {% endblock %}</title>
+	
+	
+	</head>
+
+	{% block body %}
+	<body onload="reset('{{saveFilter}}')">
+		<div class="line">
+			<a class="link" href="{% url 'store:map' %}">Map of Marketplace </a>
+			<h1 class="title">Stores</h1>
+		
+		</div>
+		<div class="layout">
+			<div class="sideBar">
+				<form method="get">
+					<input id="search_box" type="text" name="q" placeholder='{{SearchTxt}}'>
+					<input class="button" id="search_submit" type="submit" name="searchBtn" value="Search"> 
+					
+				</form>
+
+				<form method="GET">
+					<input id="seeAll" type="submit" class="button" name="allStoresBtn" value="All Stores">
+					
+				</form>
+
+				<br>
+				{% if error %}
+					<h5 class="errorMsg">No Search Entered</h5>
+				{% endif %}
+
+				<form method="GET" class="filterSec">
+					<h4 class="header">Filter Stores by Category:</h4>
+					<div id="checkbox-container">
+						{% for SelectedCategory in Categories %}
+							<input  onchange="submitFunc()" type="checkbox" id="{{SelectedCategory.id}}" name="categoryName" value="{{SelectedCategory.id}}">
+							<label for="{{SelectedCategory.id}}" style="font-family: 'Quicksand', sans-seriff; text-transform: capitalize; ">{{SelectedCategory.cName}}</label>
+							<br>
+						{% endfor %}
+					</div>
+					<input id="submitBtn" style="display:none" type="submit" class="button" value="Filter" name="filterBtn">
+
+				</form>
+				
+
+			</div>
+			
+			<div class="display" id="displayContainer">
+				{% if noResults %}
+					<h3 class="NoStoreFoundMsg">No Stores Found</h3>
+				{% endif %}
+				
+				{% for selectedStore in qStores%}
+					<div class="col-sm-2" >
+						<div class="content">
+							<a class="storeLink"  href="{% url 'store:storePage' store_Slug=selectedStore.slug store_Id=selectedStore.id %}">
+								{{selectedStore.sName}}
+							</a>
+						</div>
+					</div>
+				{% endfor %}
+
+			</div>
+			
+		</div>
+
+
+		<script>
+			var checkboxValues = JSON.parse(localStorage.getItem('checkboxValues')) || {};
+			var $checkboxes = $("#checkbox-container :checkbox");
+
+
+			$checkboxes.on("change", function(){
+				$checkboxes.each(function(){
+					checkboxValues[this.id] = this.checked;
+				});
+				
+				localStorage.setItem("checkboxValues", JSON.stringify(checkboxValues));
+
+			});
+
+			$.each(checkboxValues, function(key, value) {
+ 
+  				$("#" + key).prop('checked', value);
+			});
+			
+			function reset(saveFilter){
+				if(saveFilter == "False"){
+					$checkboxes.each(function(){
+		 				checkboxValues[this.id] = false;
+					});
+				}
+				localStorage.setItem("checkboxValues", JSON.stringify(checkboxValues));
+				$.each(checkboxValues, function(key, value){
+					$("#" + key).prop('checked', value);
+				});
+			}
+		
+			function submitFunc(){
+				document.getElementById("submitBtn").click();
+			}
+
+			// idk if this section is necessarily needed
+			$.ajax({
+				url: 'storeIndex.html',
+				success: function(data){
+					$('#displayContainer').html(data);
+				}
+			});
+			//----------------------------------------------
+		</script>
+	
+	</body>
+	{% endblock %}
+
+
+
+</html>

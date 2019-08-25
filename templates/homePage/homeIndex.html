@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+<html>
+	<head>
+		{%block cssFiles%}
+			<link rel="stylesheet" type="text/css" href="{% static 'home/styleHomePage.css' %}" />
+		{% endblock %}
+		<title>{% block title%}SMPLY:Your Local Market {% endblock %}</title>
+	</head>
+	<body>
+		{%block body %}
+		<div class="sectionBanner">
+			<h1 class="sectionTitle">SHOP</h1>
+			<div class="slideshow">
+			</div>
+		</div>
+		<br><br>
+		<div class="sectionBanner">
+			<div class="titleContainer">
+				<h2 class="productSectionTitle">FEATURED PRODUCTS</h2>
+				<a class="seeAllLink" href="#">(See All)</a>
+			</div>
+
+			<br><br>
+
+			<div class="productSlideshow">
+
+			</div>
+		</div>
+
+		<div class="sectionBanner">
+			<div class="titleContainer">
+				<h2 class="productSectionTitle">FEATURED SALES</h2>
+				<a class="seeAllLink" href="#">(See All)</a>
+			</div>
+
+			<br><br>
+	
+			<div class="productSlideshow">
+	
+			</div>
+		</div>
+
+		<div class="sectionBanner">
+			<div class="titleContainer">
+				<h2 class="productSectionTitle">POPULAR PRODUCTS</h2>
+				<a class="seeAllLink" href="#">(See All)</a>
+			</div>
+
+			<br><br>
+
+			<div class="productSlideshow">
+
+			</div>
+		</div>
+
+
+		<h1> Home Page</h1>
+		{% endblock %}
+	
+	</body>
+
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

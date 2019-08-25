@@ -1,0 +1,1069 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load customTemplateStores %}
+
+
+<html>
+    <head>
+        {% block cssFiles %}
+            <link rel="stylesheet" type="text/css" href="{% static 'store/styleStore.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'store/styleStoreMap.css' %}" />
+
+
+            <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+        {% endblock %}
+
+        <title>{% block title %} SMPLY: Maps {% endblock %}</title>
+
+
+    </head>
+
+    {% block body %}
+    <body onload="reset('{{saveFilter}}')">
+        <div class="line">
+			<a class="link" href="{% url 'store:sIndex' %}">Listing of Marketplace </a>
+			<h1 class="title">Stores</h1>
+        </div>
+        <div class="layout">
+            <div class="sideBar">
+                {% if error %}
+                    <h5 class="noSearchError">No Search Entered</h5>
+                {% endif %}
+                <h3 id="userGeolocationMsg" class="userGeolocationMsg"></h3>
+
+                <h3 class="header">Filter By Distance:</h3>
+                <select id="distanceSelect" disabled="true">
+                    <option value="all" class="distanceOption">All Distances</option>
+                    <option value="10" class="distanceOption">10 km</option>
+                    <option value="25" class="distanceOption">25 km</option>
+                    <option value="50" class="distanceOption">50 km</option>
+                    <option value="100" class="distanceOption">100 km</option>
+                </select>
+
+                <div class="headerAndBtnContainer">
+                <h3 class="header">Filters Selected:</h3>
+                <input type="button" id="seeAllBtn" class="clearBtn" name="allStoresBtn" value="Clear Selected Filters">
+                </div>
+                <div class="filterApplied" id="appliedFilters">
+                    <p id="noFiltersMsg">No Filters Selected</p>
+                </div>
+
+                <br><br>
+                
+                <div id="radioBtnForm">
+                    <h3 class="header">Filter Stores:</h3>
+
+                    <button class="filterTitle" type="button">Cities</button>
+                    <div id="cityCtn" class="filterSection">
+                        <input type="button" class="clearBtn" value="Clear City" id="clearCity">
+                        <br>
+                        {% for selectedCity in qCity %} 
+                            <input type="radio" class="filterInput cityRadio" name="cityID" value="{{selectedCity.id}}" id="{{selectedCity.city}}">               
+                            <label class ="filterLabel" for="{{selectedCity.city}}">{{selectedCity.country}}: {{selectedCity.city}}</label>
+                            <br>
+                        {% endfor %}
+                    </div>
+
+                    <button class="filterTitle" type="button">Categories</button>
+                    <div id="categoryCtn" class="filterSection">
+                        <input type="button" class="clearBtn" value="Clear Categories" id="clearCategory">
+                        <br>
+                        {% for selectedCategory in qCategory %}
+                            <input type="checkbox" class="filterInput checkboxBtn categoryCheckbox" name="categoryID" value="{{selectedCategory.id}}" id="category_{{selectedCategory.cName}}"> 
+                            <label class ="filterLabel" for="category_{{selectedCategory.cName}}">{{selectedCategory.cName}}</label>                  
+                            <br>
+                        {% endfor %}
+                    </div>
+
+                    <button class="filterTitle" type="button">Store</button>
+                    <div id="storeCtn" class="filterSection">
+
+                        <form id="storeSearchBoxForm">
+                            <input id="search_boxMap" type="text" name="q" placeholder='{{SearchTxt}}'>
+                            <input class="button" id="search_submitMap" type="submit" name="searchBtn" value="Search">
+                        </form>
+
+                        <input type="button" class="clearBtn" value="Clear Stores Filter & Search" id="clearStore">
+                        <br>
+                        <div class="checkboxFilterCtn" id="storeFilterCheckboxCtn">
+                            <!--Can be deleted, just used for now to see all stores available-->
+                            {% for selectedStore in qStores %}
+                                <input type="checkbox" class="filterInput checkboxBtn storeCheckbox" name="storeID" value="{{selectedStore.id}}" id="store_{{selectedStore.sName}}"> 
+                                <label class="filterLabel" for="store_{{selectedStore.sName}}">{{selectedStore.sName}}</label>
+                                <br>
+                            {% endfor %}
+                            <!--_____________________________________________________________-->
+                        </div>
+                    </div>       
+                </div>
+            </div>
+        
+            <div class="display map" id="map">
+                <p id="storeLocationList">{{qStoreLocation}}</p>           
+            </div>
+
+
+            <p id="statusOfFilter" style="display: none"> status</p>
+            <p id="userLat" style="display: none">User Lat</p>
+            <p id="userLng" style="display: none">User Lng</p>
+        </div>
+
+
+        <script>
+            var map;
+            var markers = [];
+            var markerClusters;
+            var infos = [];
+
+            //for hide/show dropdown filter bar
+            $(".filterTitle").on("click", function(){
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.maxHeight){
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } 
+            });
+
+            //function to open only 1 info window at one time
+            function closeInfos(){
+                if(infos.length > 0){
+                    /* detach the info-window from the marker ... undocumented in the API docs */
+                    infos[0].set("marker", null);
+                    /* and close it */
+                    infos[0].close();
+                    /* blank the array */
+                    infos.length = 0;
+                }
+            }
+
+
+            $('#seeAllBtn').on('click', function(){
+                $('.cityRadio').each(function(){
+                    this.checked = false;
+                });
+                $('.categoryCheckbox').each(function(){
+                    this.checked = false;
+                });
+                $('.storeCheckbox').each(function(){
+                    this.checked = false;
+                });
+
+                $('.filterAppliedText').each(function(){
+                    this.remove();
+                });
+
+                $.ajax({
+                    url: '/stores/map/filterMapAjax/',
+                    data: {
+                        'seeAll': 'false',
+                        'checkedRadioID': null,
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+                    },
+                    type: "GET",
+                    success: function (data){
+
+                        var marker;
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers = [];
+                        markerClusters.clearMarkers();
+                        
+                        for (var i = 0; i < data.qStoreLocation.length; i++){
+                            var icon = {
+                                url: data.qStorePicsToLoc[i], // url
+                                scaledSize: new google.maps.Size(40, 40), // scaled size
+                            };
+                            marker = new google.maps.Marker({
+                                position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                icon: icon,
+                                map: map
+                            });
+                            var infowindow = new google.maps.InfoWindow();
+
+                            var contentSlug = data.qStoreSlugs[i];
+                            var contentStoreID = data.qStoreIDsForInfoBox[i];
+
+                            var contentURL = "{% url 'store:storePage' store_Slug=123 store_Id=0 %}".replace (/123/, contentSlug).replace(/0/, contentStoreID);
+                            var contentURLAddedForm = "?storeLoc=" + data.qStoreLocation[i].id + "&filterBtn=Filter";
+                            var content ='<div id="content">' +
+                                '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +
+                                '<p> Phone: ' + data.qPhoneNum[i] + '</p>'+ '<a href=' + contentURL+contentURLAddedForm + '>' +
+                                'Link to Store Page </a>' +
+                                '</div>'; 
+                            
+                            google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                return function() {
+                                    closeInfos();
+                                    infowindow.setContent(content);
+                                    infowindow.open(map,marker);
+                                    infos[0]=infowindow;
+                                };
+                            })(marker,content,infowindow)); 
+
+                            markers.push(marker)
+                        }
+                        markerClusters = new MarkerClusterer(map, markers,
+                            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                        );
+
+                        $.ajax({
+                            url: '/stores/map/ajaxStoreCheckboxFilter/',
+                            data:{
+                                'qStoreIDs': data.qStoreIDs
+                            },
+                            success: function(data){
+                                $("#storeFilterCheckboxCtn").html(data);   
+                                document.getElementById("storeFilterCheckboxCtn").style.height="auto";                                
+                            },
+                            error: function(data){
+                                alert("Cannot update store checkboxes");
+                            },
+                        });
+                    },
+                    error: function (data){
+                        alert("Error: Unable to see all store locations");
+                    }
+                });
+    
+            });
+
+            $('.clearBtn').on('click', function(){
+                if (this.id=='clearCity'){
+                    document.getElementById("statusOfFilter").innerHTML = "clearBtnCall";
+                    $('.cityRadio').each(function(){ //unchecks all city filter btn
+                        this.checked = false;
+                    });
+
+                    $('.cityFilterApplied').each(function(){ //removes all city filters applied
+                        this.remove();
+                    });
+                    
+                    $(".cityRadio").triggerHandler("change"); //trigger call
+                }              
+                else if(this.id=='clearCategory'){
+                    document.getElementById("statusOfFilter").innerHTML = "clearBtnCall";
+                    $('.categoryCheckbox').each(function(){
+                        this.checked = false;
+                    });
+                    $('.categoryFilterApplied').each(function(){ //removes all city filters applied
+                        this.remove();
+                    });                    
+                    $(".categoryCheckbox").triggerHandler("change");
+                }
+                else if(this.id=='clearStore'){
+                    document.getElementById("statusOfFilter").innerHTML = "clearBtnCall";
+                    $('.storeCheckbox').each(function(){
+                        this.checked = false;
+                    });
+                    $('.storeFilterApplied').each(function(){ //removes all city filters applied
+                        this.remove();
+                    });
+                    $(".storeCheckbox").triggerHandler("change");
+                }
+                if ((document.getElementsByClassName("filterAppliedText").length == 0) && !(document.getElementById("noFiltersMsg"))){
+                    var noFilters = document.createElement("p");
+                    noFilters.id = "noFiltersMsg";
+                    noFilters.innerHTML = "No Filters Selected";
+                    document.getElementById("appliedFilters").appendChild(noFilters);
+                }
+                document.getElementById("storeFilterCheckboxCtn").style.height="auto";
+            });
+
+
+
+            $('.cityRadio').on('change', function(){
+                var checkedRadioID = [];
+                var checkedCategoryID = [];
+                var checkedStoreID = [];
+
+                //-----------------------Remove all filter buttons at the top-------------
+                $('.filterAppliedText').each(function(){
+                    if (this.classList.contains("cityFilterApplied")==true){
+                        this.remove();
+                    };
+                });
+                //-----------------------Add filter button at top--------------------------
+                if(document.getElementById("statusOfFilter").innerHTML!="clearBtnCall"){
+                    if (document.getElementById("noFiltersMsg")){
+                        document.getElementById("noFiltersMsg").remove();
+                    }
+                    var textFilterVal = document.createElement("button");
+                    textFilterVal.innerHTML = this.id;
+                    textFilterVal.id = "appliedCityFilter_"+this.value;
+                    textFilterVal.classList = "cityFilterApplied filterAppliedText";
+                
+                    document.getElementById("appliedFilters").appendChild(textFilterVal);            
+
+                }
+                document.getElementById("statusOfFilter").innerHTML = "status";
+
+                //---------------------Generate List to send to ajax-----------------------           
+                $('.filterAppliedText').each(function(){
+                    if (this.classList.contains("storeFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedStoreID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("cityFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedRadioID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("categoryFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedCategoryID.push(IDvalue);
+                    }
+                });
+
+
+                if ((document.getElementsByClassName("filterAppliedText").length == 0) && !(document.getElementById("noFiltersMsg"))){
+                    var noFilters = document.createElement("p");
+                    noFilters.id = "noFiltersMsg";
+                    noFilters.innerHTML = "No Filters Selected";
+                    document.getElementById("appliedFilters").appendChild(noFilters);
+                }
+
+                $.ajax({
+                    url: '/stores/map/filterMapAjax/',
+                    data: {
+                        'seeAll': 'false',
+                        'checkedRadioID': checkedRadioID,
+                        'checkedCategoryID': checkedCategoryID,
+                        'checkedStoreID': checkedStoreID,
+
+                        //for mapping
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+
+                    },
+                    type: "GET",
+                    success: function (data){
+                        var marker
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers = [];
+                        markerClusters.clearMarkers();
+
+                        var icon;
+                        if (data.qStoreLocation != "None"){
+                            for (var i = 0; i < data.qStoreLocation.length; i++){
+                                var icon = {
+                                    url: data.qStorePicsToLoc[i], // url
+                                    scaledSize: new google.maps.Size(40, 40), // scaled size
+
+                                };
+                                marker = new google.maps.Marker({
+                                    position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                    icon: icon,
+                                    map: map
+                                });
+                                var infowindow = new google.maps.InfoWindow();
+                            
+                                var contentSlug = data.qStoreSlugs[i];
+                                var contentStoreID = data.qStoreIDsForInfoBox[i];
+                            
+                                var contentURL = "{% url 'store:storePage' store_Slug=123 store_Id=0 %}".replace (/123/, contentSlug).replace(/0/, contentStoreID);
+                                var contentURLAddedForm = "?storeLoc=" + data.qStoreLocation[i].id + "&filterBtn=Filter";
+                                var content ='<div id="content">' +
+                                    '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                    '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +
+                                    '<p> Phone: ' + data.qPhoneNum[i] + '</p>'+ '<a href=' + contentURL+contentURLAddedForm + '>' +
+                                    'Link to Store Page </a>' +
+                                    '</div>'; 
+                            
+                                google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                    return function() {
+                                        closeInfos();
+                                        infowindow.setContent(content);
+                                        infowindow.open(map,marker);
+                                        infos[0]=infowindow;
+                                    };
+                                })(marker,content,infowindow)); 
+
+                                markers.push(marker)
+                            }
+                            markerClusters = new MarkerClusterer(map, markers,
+                                {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                            );
+
+                            $.ajax({
+                                url: '/stores/map/ajaxStoreCheckboxFilter/',
+                                data:{
+                                    'qStoreIDs': data.qStoreIDs
+                                },
+
+                                success: function(data){
+                                    $("#storeFilterCheckboxCtn").html(data);           
+                                    document.getElementById("storeFilterCheckboxCtn").style.height="auto";           
+
+                                    //when updating store checkbox filter list, check boxes that already have filter applied
+                                    var storeFiltersAppliedArray = [];
+                                    $('.storeFilterApplied').each(function(){
+                                        storeFiltersAppliedArray.push("store_"+this.innerHTML);
+                                    });
+                                    $(storeFiltersAppliedArray).each(function(index, value){
+                                        document.getElementById(value).checked = true;
+                                    });
+                                    //-------------------------------------------------------------------------------------       
+                                },
+                                error: function(data){
+                                    alert("Cannot update store checkboxes");
+                                },
+                            });
+                        }
+                        else{
+                            alert("No Store Location Founds");
+                        }
+                    },
+                    error: function(data){
+                        alert("Error: please refresh page");
+                    }
+                });
+            });
+
+            $('.categoryCheckbox, #distanceSelect').on('change', function(event){
+                var checkedRadioID = [];
+                var checkedCategoryID = [];
+                var checkedStoreID = [];
+                var IDvalue;
+          
+                //---------------Add Filter Section Button-------------------
+                if (document.getElementById("statusOfFilter").innerHTML != "clearBtnCall"){
+                    if (document.getElementById("noFiltersMsg")){
+                        document.getElementById("noFiltersMsg").remove();
+                    }
+                    if(this.checked==false){   
+                        document.getElementById("appliedCategoryFilter_"+this.value).remove();    
+                    }
+                    else if (this.checked==true){
+                        var textFilterVal = document.createElement("button");
+                        textFilterVal.innerHTML = this.id.split("_")[1];
+                        textFilterVal.id = "appliedCategoryFilter_"+this.value;
+                        textFilterVal.classList = "categoryFilterApplied filterAppliedText";   
+                        document.getElementById("appliedFilters").appendChild(textFilterVal);
+                    }
+                }
+                document.getElementById("statusOfFilter").innerHTML = "status";
+
+                //---------------------Generate List to send to ajax-----------------------
+                $('.filterAppliedText').each(function(){
+                    if (this.classList.contains("storeFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedStoreID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("cityFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedRadioID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("categoryFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedCategoryID.push(IDvalue);
+                    }
+                });
+
+                if ((document.getElementsByClassName("filterAppliedText").length == 0) && !(document.getElementById("noFiltersMsg"))){
+                    var noFilters = document.createElement("p");
+                    noFilters.id = "noFiltersMsg";
+                    noFilters.innerHTML = "No Filters Selected";
+                    document.getElementById("appliedFilters").appendChild(noFilters);
+                }
+
+                $.ajax({
+                    url: '/stores/map/filterMapAjax/',
+                    data: {
+                        'seeAll': 'false',
+                        'checkedRadioID': checkedRadioID,
+                        'checkedCategoryID': checkedCategoryID,
+                        'checkedStoreID': checkedStoreID,
+
+                        //for mapping
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+                    },
+                    type: "GET",
+                    success: function (data){
+                        var marker
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers = [];
+                        markerClusters.clearMarkers();
+                        if (data.qStoreLocation != "None"){
+
+                            for (var i = 0; i < data.qStoreLocation.length; i++){
+                                var icon = {
+                                    url: data.qStorePicsToLoc[i], // url
+                                    scaledSize: new google.maps.Size(40, 40), // scaled size
+                                };
+                                marker = new google.maps.Marker({
+                                    position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                    icon: icon,
+                                    map: map
+                                });
+                                var infowindow = new google.maps.InfoWindow();
+                            
+                                var contentSlug = data.qStoreSlugs[i];
+                                var contentStoreID = data.qStoreIDsForInfoBox[i];
+                            
+                                var contentURL = "{% url 'store:storePage' store_Slug=123 store_Id=0 %}".replace (/123/, contentSlug).replace(/0/, contentStoreID);
+                                var contentURLAddedForm = "?storeLoc=" + data.qStoreLocation[i].id + "&filterBtn=Filter";
+                                var content ='<div id="content">' +
+                                    '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                    '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +
+                                    '<p> Phone: ' + data.qPhoneNum[i] + '</p>'+ '<a href=' + contentURL+contentURLAddedForm + '>' +
+                                    'Link to Store Page </a>' +
+                                    '</div>'; 
+                            
+                                google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                    return function() {
+                                        closeInfos();
+                                        infowindow.setContent(content);
+                                        infowindow.open(map,marker);
+                                        infos[0]=infowindow;
+                                    };
+                                })(marker,content,infowindow)); 
+                                markers.push(marker)
+                            }
+                            markerClusters = new MarkerClusterer(map, markers,
+                                {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                            );
+
+                            $.ajax({
+                                url: '/stores/map/ajaxStoreCheckboxFilter/',
+                                data:{
+                                    'qStoreIDs': data.qStoreIDs
+                                },
+
+                                success: function(data){
+                                    $("#storeFilterCheckboxCtn").html(data);                                   
+                                    document.getElementById("storeFilterCheckboxCtn").style.height="auto";
+                                    
+                                    //when updating store checkbox filter list, check boxes that already have filter applied
+                                    var storeFiltersAppliedArray = [];
+                                    $('.storeFilterApplied').each(function(){
+                                        storeFiltersAppliedArray.push("store_"+this.innerHTML);
+                                    });
+                                    $(storeFiltersAppliedArray).each(function(index, value){
+                                        document.getElementById(value).checked = true;
+                                    });
+                                    //-------------------------------------------------------------------------------------
+                                },
+                                error: function(data){
+                                    alert("Cannot update store checkboxes");
+                                },
+                            });
+                        }
+                        else{
+                            alert("No Store Location Founds");
+                        }
+                    },
+                    error: function(data){
+                        alert("Error: please refresh page");
+                    }
+                });
+            });
+
+
+            $('.storeCheckbox').on('change', function(){
+
+                
+                var checkedRadioID = [];
+                var checkedCategoryID = [];
+                var checkedStoreID = [];
+
+                //-----------------------Add filter button at top--------------------------
+                if (document.getElementById("statusOfFilter").innerHTML != "clearBtnCall"){
+                    if (document.getElementById("noFiltersMsg")){
+                        document.getElementById("noFiltersMsg").remove();
+                    }
+                    if(this.checked==false){   
+                        document.getElementById("appliedStoreFilter_"+this.value).remove();    
+                    }
+                    else if (this.checked==true){
+
+                        var textFilterVal = document.createElement("button");
+                        textFilterVal.innerHTML = this.id.split("_")[1];
+                        textFilterVal.id = "appliedStoreFilter_"+this.value;
+                        textFilterVal.classList = "storeFilterApplied filterAppliedText";   
+                        document.getElementById("appliedFilters").appendChild(textFilterVal);
+
+                    }
+                }
+
+                //---------------------Generate List to send to ajax-----------------------
+                $('.filterAppliedText').each(function(){
+                    if (this.classList.contains("storeFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedStoreID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("cityFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedRadioID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("categoryFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedCategoryID.push(IDvalue);
+                    }
+                });
+
+                //Check if there are filters applied. If no filters applied, displays message
+                if ((document.getElementsByClassName("filterAppliedText").length == 0) && !(document.getElementById("noFiltersMsg"))){
+                    var noFilters = document.createElement("p");
+                    noFilters.id = "noFiltersMsg";
+                    noFilters.innerHTML = "No Filters Selected";
+                    document.getElementById("appliedFilters").appendChild(noFilters);
+                }
+                
+                //ajax call
+                $.ajax({
+                    url: '/stores/map/filterMapAjax/',
+                    data: {
+                        'seeAll': 'false',
+                        'checkedRadioID': checkedRadioID,
+                        'checkedCategoryID': checkedCategoryID,
+                        'checkedStoreID': checkedStoreID,
+
+                        //for mapping
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+
+                    },
+                    type: "GET",
+                    success: function (data){
+                        var marker;
+
+
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers = [];
+                        markerClusters.clearMarkers();
+
+                        if (data.qStoreLocation != "None"){
+                            for (var i = 0; i < data.qStoreLocation.length; i++){
+                                var icon = {
+                                    url: data.qStorePicsToLoc[i], // url
+                                    scaledSize: new google.maps.Size(40, 40), // scaled size
+                                };
+                                marker = new google.maps.Marker({
+                                    position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                    icon: icon,
+                                    map: map
+                                });
+                                markers.push(marker)
+                            }
+                            markerClusters = new MarkerClusterer(map, markers,
+                                {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                            );
+                        }
+                        else{
+                            alert("No Results");
+                        }
+
+                        $.ajax({
+                            url: '/stores/map/ajaxStoreCheckboxFilter/',
+                            data:{
+                                'qStoreIDs': data.qStoreIDs
+                            },
+                            success: function(data){
+                                $("#storeFilterCheckboxCtn").html(data);                                   
+                                document.getElementById("storeFilterCheckboxCtn").style.height="auto";
+                                    
+                                //when updating store checkbox filter list, check boxes that already have filter applied
+                                var storeFiltersAppliedArray = [];
+                                $('.storeFilterApplied').each(function(){
+                                    storeFiltersAppliedArray.push("store_"+this.innerHTML);
+                                });
+                                $(storeFiltersAppliedArray).each(function(index, value){
+                                    document.getElementById(value).checked = true;
+                                });
+                                //-------------------------------------------------------------------------------------
+                            },
+                            error: function(data){
+                                alert("Cannot update store checkboxes");
+                            },
+                        });
+                        document.getElementById("statusOfFilter").innerHTML = "status";
+                    },
+                    error: function(data){
+                        alert("Error: please refresh page");
+                        document.getElementById("statusOfFilter").innerHTML = "status";
+                    }
+                });
+            });
+
+
+            $("#appliedFilters").on( "click", "button.filterAppliedText" , function() {
+
+                document.getElementById(this.id).remove();
+                document.getElementById("statusOfFilter").innerHTML = "clearBtnCall";
+
+                if (this.classList.contains("cityFilterApplied")){
+                    document.getElementById(this.innerHTML).checked = false;
+                    $(".cityRadio").triggerHandler("change");
+
+                }
+                else if (this.classList.contains("categoryFilterApplied")){
+                    document.getElementById("category_"+this.innerHTML).checked = false;
+                    $(".categoryCheckbox").triggerHandler("change");
+
+                }
+                else if (this.classList.contains("storeFilterApplied")){
+                    document.getElementById("store_"+this.innerHTML).checked = false;
+                    $(".storeCheckbox").triggerHandler("change");
+
+                }
+            });
+
+
+            //run when page loads to render map
+            function initMap(){
+                userInfoWindow = new google.maps.InfoWindow;
+
+                if (navigator.geolocation){
+                    navigator.geolocation.getCurrentPosition(function(position){
+                        var userPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        document.getElementById("userLat").innerHTML = userPos.lat;
+                        document.getElementById("userLng").innerHTML = userPos.lng;
+                        userInfoWindow.setPosition(userPos);
+                        userInfoWindow.setContent('You');
+                        map = new google.maps.Map(document.getElementById('map'), {
+                            zoom: 12,
+                            center: userPos
+                        });
+                        userInfoWindow.open(map);
+
+                        document.getElementById("distanceSelect").style.color="black";
+                        $('#distanceSelect').attr('disabled', false);
+
+                        allStoreLocations();
+
+
+                    }, function(){
+                        handleUserLocationError(true);
+                        map = new google.maps.Map(document.getElementById('map'), {
+                            zoom: 12,
+                            center: {lat: 43.653908, lng: -79.384293} //downtown Toronto Coordinates
+                        });
+
+                        document.getElementById("distanceSelect").style.color="#DCDCDC";
+                        $('#distanceSelect').attr('disabled', true);
+
+                        allStoreLocations();
+                    });
+                }
+                else{
+                    handleUserLocationError(false);
+                    map = new google.maps.Map(document.getElementById('map'), {
+                            zoom: 12,
+                            center: {lat: 43.653908, lng: -79.384293}//downtown Toronto Coordinates
+                    });
+
+                    document.getElementById("distanceSelect").style.color="#DCDCDC";
+                    $('#distanceSelect').attr('disabled', true);
+
+                    allStoreLocations();
+                    
+                }
+            }
+
+            function allStoreLocations(){
+                $.ajax({
+                    url: '/stores/map/filterMapAjax/',
+                    data: {
+                        'seeAll': 'true',
+                        'checkedRadioID': null,
+
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+
+                    },
+                    type: "GET",
+                    success: function (data){
+                        var contentString;
+                        
+                        var marker;
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers = [];
+
+                        for (var i = 0; i < data.qStoreLocation.length; i++){
+
+                            var icon = {
+                                url: data.qStorePicsToLoc[i], // url
+                                scaledSize: new google.maps.Size(40, 40), // scaled size
+                            };
+                            marker = new google.maps.Marker({
+                                position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                icon: icon,
+                                map: map
+                            });
+
+                            var infowindow = new google.maps.InfoWindow();
+                            
+                            var contentSlug = data.qStoreSlugs[i];
+                            var contentStoreID = data.qStoreIDsForInfoBox[i];         
+
+                            var contentURL = "{% url 'store:storePage' store_Slug=123 store_Id=0 %}".replace (/123/, contentSlug).replace(/0/, contentStoreID);
+                            var contentURLAddedForm = "?storeLoc=" + data.qStoreLocation[i].id + "&filterBtn=Filter";
+
+
+                            var content ='<div id="content">' +
+                                '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +
+                                '<p> Phone: ' + data.qPhoneNum[i] + '</p>'+ '<a href=' + contentURL+contentURLAddedForm + '>' +
+                                'Link to Store Page </a>' +
+                                '</div>'; 
+                            
+                            google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                return function() {
+                                    closeInfos();
+                                    infowindow.setContent(content);
+                                    infowindow.open(map,marker);
+                                    infos[0]=infowindow;
+                                };
+                            })(marker,content,infowindow)); 
+
+                            markers.push(marker);
+
+                        }
+
+                        markerClusters = new MarkerClusterer(map, markers,
+                            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                        );
+
+
+                        $.ajax({
+                                url: '/stores/map/ajaxStoreCheckboxFilter/',
+                                data:{
+                                    'qStoreIDs': data.qStoreIDs
+                                },
+                                success: function(data){
+                                    $("#storeFilterCheckboxCtn").html(data);       
+                                    document.getElementById("storeFilterCheckboxCtn").style.height="auto";                           
+                                },
+                                error: function(data){
+                                    alert("Cannot update store checkboxes");
+                                },           
+                        });
+                    },
+                    error: function (data){
+                        alert("Error: please refresh page");
+                    }
+                });
+            }
+
+
+            function handleUserLocationError(browserHasGeolocation){
+                if (browserHasGeolocation==true){
+                    //user disabled their location to be located
+                    document.getElementById("userGeolocationMsg").innerHTML='Your location cannot be located. Filter by distance disabled'
+                }
+                else if (browserHasGeolocation == false){
+                    //user's browser does not support geolocation
+                    document.getElementById("userGeolocationMsg").innerHTML='Browser does not support geolocation. Filter by distance disabled'
+                }
+            }
+
+            //activated on search
+            
+            //$('#search_submitMap').on('click', function(event){
+
+            //$('#storeSearchContainer').on('submit', function(event){
+            $('#storeSearchBoxForm').on('submit', function(event){
+                
+                event.preventDefault();
+                var checkedRadioID = [];
+                var checkedStoreID = [];
+                var checkedCategoryID = [];
+
+                $('.filterAppliedText').each(function(){
+                    if (this.classList.contains("storeFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedStoreID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("cityFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedRadioID.push(IDvalue);
+                    }
+                    else if (this.classList.contains("categoryFilterApplied")==true){
+                        IDvalue = this.id.split("_")[1];
+                        checkedCategoryID.push(IDvalue);
+                    }
+                });
+
+                var searchValue = document.getElementById("search_boxMap").value;
+
+                $.ajax({
+                    url: '/stores/map/ajaxStoreSearch/',
+                    data:{
+                        'searchValue': searchValue,
+                        'checkedRadioID': checkedRadioID,
+                        'checkedCategoryID': checkedCategoryID,
+                        'checkedStoreID': checkedStoreID,
+
+                        //for mapping
+                        'userLat': document.getElementById("userLat").innerHTML,
+                        'userLng': document.getElementById("userLng").innerHTML,
+                        'distanceValue': document.getElementById("distanceSelect").value,
+                    },
+                    success: function(data){
+
+                        document.getElementById("search_boxMap").value = "";
+                        document.getElementById("storeFilterCheckboxCtn").style.height="auto"; 
+                        $.ajax({
+                            url: '/stores/map/ajaxStoreCheckboxFilter/',
+                            data:{
+                                'qStoreIDs': data.qStoreIDs
+                            },
+                            success: function(data){
+                                $("#storeFilterCheckboxCtn").html(data);                                   
+                                document.getElementById("storeFilterCheckboxCtn").style.height="auto";
+                                    
+                                //when updating store checkbox filter list, check boxes that already have filter applied
+                                var storeFiltersAppliedArray = [];
+                                $('.storeFilterApplied').each(function(){
+                                    storeFiltersAppliedArray.push("store_"+this.innerHTML);
+                                });
+                                $(storeFiltersAppliedArray).each(function(index, value){
+                                    document.getElementById(value).checked = true;
+                                });
+                                    //-------------------------------------------------------------------------------------
+                            },
+                            error: function(data){
+                                alert("Cannot update store checkboxes");
+                            },
+                        });
+                    },
+                    error: function(data){
+                        alert("Error: please refresh page");
+                    }
+                });
+            });
+
+
+//----------------------------------NOT USED BELOW------------------------------------------
+/*
+            function initMap() {
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 9,
+                    center: {lat: 43.653908, lng: -79.384293}
+                });
+                
+                userInfoWindow = new google.maps.InfoWindow;
+
+                if (navigator.geolocation){
+                    
+                    navigator.geolocation.getCurrentPosition(function(position){
+                        var userPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        userInfoWindow.setPosition(userPos);
+                        userInfoWindow.setContent('Your Location');
+                        userInfoWindow.open(map);
+                        map.setCenter(userPos);
+                        
+                    }, function(){
+                        handleUserLocationError(true);
+                    });
+                } else {
+                    handleUserLocationError(false);
+                }
+
+                document.getElementById("test").innerHTML = "asd";
+            }
+*/
+
+/*
+            function reset(saveFilter){
+// NOTE: map works
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 9,
+                    center: {lat: 43.653908, lng: -79.384293}
+                });
+              
+                userInfoWindow = new google.maps.InfoWindow;
+
+                if (navigator.geolocation){
+                    
+                    navigator.geolocation.getCurrentPosition(function(position){
+                        var userPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        userInfoWindow.setPosition(userPos);
+                        userInfoWindow.setContent('Your Location');
+                        userInfoWindow.open(map);
+                        map.setCenter(userPos);
+                        
+                    }, function(){
+                        handleUserLocationError(true);
+                    });
+                } else {
+                    handleUserLocationError(false);
+                }
+
+
+                
+                if (saveFilter == 'True'){
+                    
+                    $.each(radioButtonValues, function(key, value){
+                        if (radioButtonValues[key] == true){
+                            document.getElementById(key).checked = true;
+                        }
+                    });
+                }
+                else {
+                    $.each(radioButtonValues, function(key, value){
+                        radioButtonValues[key] = false;
+                    });
+                }
+                localStorage.setItem("radioButtonValues", JSON.stringify(radioButtonValues));
+
+            }
+//------------------------------------------------------------------------------------------------    
+*/
+           
+        
+        
+        </script>
+        <!---->
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAwnQG_angNsf_RKtA50Iu4gCu1du8XGb0&callback=initMap" async defer></script>
+        <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+
+
+    </body>
+    {% endblock %}
+
+
+
+
+
+
+</html>
+
+
+
+
+
+
+
+
+
+

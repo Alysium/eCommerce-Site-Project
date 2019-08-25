@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load customTemplateFootwear %}
+
+<html>
+    <head>
+        {% block cssFiles%}
+            <link rel="stylesheet" type="text/css" href="{% static 'store/styleStore.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'items/styleItems.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'sale/styleSale.css'%}" />
+        {% endblock %}
+        <title>{% block title %} SMPLY: Sale {% endblock %}</title>
+
+
+    </head>
+
+    {% block body %}
+        <body>
+            <div class="line">
+                <h1 class="title">Sale: {{saleCategory}}</h1>
+            </div>
+            <div class="layout">
+                <div class="sideBar">
+                    <form>
+                        <input id="search_box" type="text" placeholder="Search Footwear Name...">
+                        <input class="button" id="search_submit" type="submit" value="Search">
+                    </form>
+                    <button class="button" id="seeAll">All Sales</button>
+
+                    <form>
+                        <h3 class="header">Filter Footwear by Category:</h3>
+                    </form>
+
+                </div>
+
+                <div class="display" id="productDisplay">
+                    {% for row in numOfRow %}
+                        <div id="productRow">
+                                {% with startIndex=row|mul:numOfCol %}
+                                {% for col in numOfColRange%}
+                                    {% with productIndex=startIndex|adder:col %}  
+                                    {% if amountOfProducts > productIndex%}  
+                                        {% with selectedProduct=qSaleDictList|index:productIndex %}
+                                        <div class="col-xs-3 productListingBox">
+                                            <div class="content">
+                                                <h6 class="storeName" id="storeName">{{selectedProduct.storeLocation.parentStore.sName}}</h6>
+                                                <h6 class="salePrice">${{selectedProduct.salePrice}}</h6>
+                                                <h6 class="regularPrice">${{selectedProduct.regularPrice}}</h6>
+                                                <br>
+                                                <h6 class="storeAddress" id="storeCityAndAddress">{{selectedProduct.storeLocation.locationCity.city}}: {{selectedProduct.storeLocation.address}}</h6>                    
+                                                <h6 class="storeAddress seeMap"><a href="#">(See Map)</a></h6>
+                                                <a class="productLink" href="#">
+                                                    <img class="displayPic" alt="{{selectedProduct}}" src="{{selectedProduct.product.displayPic.url}}">
+                                                    <h4 class="productTitle">{{selectedProduct.product.generalItem.shoeName}} {{selectProduct.product.additionalName}} </h4>
+
+                                                    {% if selectedProduct.additionalName != None %}
+                                                        <h5 class="productTitle" style="display:inline">"{{selectedProduct.additionalName}}"</h5>
+                                                    {% endif %}
+                                                </a>
+                                                <h6 class="productDescription">{{selectedProduct.product.generalItem.brand}}</h6>
+                                                <h6 class="productDescription">{{selectedProduct.product.generalItem.gender}}</h6>
+                                                <h6 class="productDescription">{{selectedProduct.product.generalItem.style}}</h6>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                    {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                                {% endwith %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <br><br><br>
+            <p>--------------------------------TESTING BELOW---------------------</p>
+            <div class="display" id="productDisplay">
+                {% for row in TESTnumOfRow %}
+                    <div id="productRow">
+                        {% with startIndex=row|mul:TESTnumOfCol %}
+                        {% for col in TESTnumOfColRange %}
+                            {% with productIndex=startIndex|adder:col %}  
+                            {% if TESTamountOfProducts > productIndex%}  
+                                {% with selectedProduct=qProducts|index:productIndex %} 
+                                <div class="col-xs-3 productListingBox">
+                                    <div class="content">
+
+
+
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+            <p>-------------------------------------------------------------------</p>
+
+            <p>qProducts: {{qProducts}}</p>
+            <p>numOfSizes: {{numOfSizes}}</p>
+
+        </body>
+    {% endblock %}
+
+
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

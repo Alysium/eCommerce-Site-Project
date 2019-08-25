@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load customTemplateFootwear %}
+
+<html>
+    <head>
+
+        {%block cssFiles%} 
+            <link rel="stylesheet" type="text/css" href="{% static 'store/styleStorePage.css' %}"/>
+            <link rel="stylesheet" type="text/css" href="{% static 'items/styleItems.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'store/styleStore.css' %}" />
+            <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+        {% endblock %}
+
+        {%block title%} SMPLY: {{selectedCategory}} {% endblock %}
+
+    </head>
+
+{% block body %}
+    <body>
+        <div class="line">
+            <h1 class="title">{{selectedCategory}}</h1>
+        </div>
+        <!--div element for body of forms and product listing-->
+        <div class="layout">
+            <!--div element for the sidebar containing all the filters-->
+            <div class="sideBar">
+                <form method="get" action=".">
+                    <input id="search_box" type="text" placeholder="Search Footwear Name...">
+                    <input class="button" id="search_submit" type="submit" value="Search">
+                </form>
+
+                <button class="button" id="seeAll">All Footwear</button>
+                
+
+                <br>
+                <h3>Change Order:</h3>
+                <select id="productOrder">
+                    <option value="initialResults">Initial Results</option>
+                    <option value="alphabetical">A-Z</option>
+                    <option value="priceLowToHigh">Price (Low to High)</option>
+                    <option value="priceHighToLow">Price (High to Low)</option>
+                </select>
+
+
+                <form method="GET" id="checkbox-container">
+                    <h3 class="header">Filter Footwear by Category:</h3>
+                    <!--Gender Filter Section-->
+                    <button class="subHeader" type="button">Gender</button>
+                    <div class="filterSection" id="genderSec">
+                        {% for SelectedGender in allGender%}
+                            <input  class="checkboxInput genderFilter" type="checkbox" id="{{SelectedGender.gender}}" name="gender" value="{{SelectedGender.id}}">
+                            <label for="{{SelectedGender.gender}}" class="checkboxLabel">
+                                {{SelectedGender.gender}}
+                            </label>    
+                            <br>
+                        {% endfor %}
+                    </div>
+                    <!--Shoe Style Filter Section-->
+                    <button class="subHeader" type="button">Shoe Style</button>
+                    <div class="filterSection" id="styleSec">
+                        {% for SelectedShoeStyle in allShoeStyle%}
+                            <input  class="checkboxInput styleFilter" type="checkbox" id="{{SelectedShoeStyle.style}}" name="shoeStyle" value="{{SelectedShoeStyle.id}}">
+                            <label for="{{SelectedShoeStyle.style}}" class="checkboxLabel">
+                                {{SelectedShoeStyle.style}}
+                            </label>    
+                            <br>
+                        {% endfor %}
+                    </div>
+                    <!--Brands Filter Section-->
+                    <button class="subHeader" type="button">Brands</button>
+                    <div class="filterSection" id="brandSec">
+                        {% for SelectedBrand in allBrands%}
+                            <input class="checkboxInput brandFilter" type="checkbox" id="{{SelectedBrand.brandName}}" name="brands" value="{{SelectedBrand.id}}">
+                            <label for="{{SelectedBrand.brandName}}" class="checkboxLabel">
+                                {{SelectedBrand.brandName}}
+                            </label>    
+                            <br>
+                        {% endfor %}
+                    </div>
+                    <!--Colors Filter Section-->
+                    <button class="subHeader" type="button">Colors</button>
+                    <div class="filterSection" id="colorsSec">
+                        {% for SelectedColors in allColors %}
+                            <input class="checkboxInput colorFilter" type="checkbox" id="{{SelectedColors.color}}" name="colors" value="{{SelectedColors.id}}">
+                            <label for="{{SelectedColors.color}}" class="checkboxLabel">
+                                {{SelectedColors.color}}
+                            </label>    
+                            <br>
+                        {% endfor %}
+                    </div>
+                </form>   
+
+            </div>
+            <!--Product Display Listing-->
+            <div id="productDisplay" class="display">
+                {% if noResults %}
+                    <h3 class="NoStoreFoundMsg">No Footwear Found</h3>
+                {% endif %}
+                <!--complex loop to ensure all rows are the same height-->
+                {% for row in numOfRow %}
+                    <div id="productRow">
+                        {% with startIndex=row|mul:numOfCol %}
+                        {% for col in numOfColRange%}
+                            {% with productIndex=startIndex|adder:col %}    
+                            {% if amountOfProducts > productIndex%}
+                                {% with selectedProduct=qFootwear|index:productIndex %}
+                                <div class="col-xs-3 productListingBox">
+                                    <div class="content">
+                                        {% if selectedProduct.avgCost %}
+                                            <h6 class="avgPrice"> Average Price: ${{selectedProduct.avgCost|floatformat:2}}</h6>
+                                        {% else %}
+                                            <h6 class="avgPrice">No Stock</h6>
+                                        {% endif %}
+                                        <a class="productLink" href="{% url 'products:productPage' generalItem_slug=selectedProduct.slug Product_id=selectedProduct.id %}">
+                                            <img class="displayPic" alt="{{selectedProduct}}" src="{{selectedProduct.displayPic.url}}">
+                                            <h4 class="productTitle">{{selectedProduct.generalItem.shoeName}}</h4>
+                                            {% if selectedProduct.additionalName != None %}
+                                                <h5 class="productTitle" style="display:inline">"{{selectedProduct.additionalName}}"</h5>
+                                            {% endif %}
+                                        </a>
+                                        <h6 class="productDescription">{{selectedProduct.generalItem.brand}}</h6>
+                                        <h6 class="productDescription">{{selectedProduct.generalItem.gender}}</h6>
+                                        <h6 class="productDescription">{{selectedProduct.generalItem.style}}</h6>
+                                    </div>
+                                </div>
+
+                                {% endwith %}
+                            {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <p style="display:none" id="gendersList_jsonHolder">{{gendersList_json}}</p>
+        <p style="display:none" id="shoeStyleList_jsonHolder">{{shoeStyleList_json}}</p>
+        <p style="display:none" id="brandsList_jsonHolder">{{brandsList_json}}</p>
+        <p style="display:none" id="colorsList_jsonHolder">{{colorsList_json}}</p>
+
+
+        <h5>Results: </h5>
+        {% if query  %}
+            <p>QUERY: {{query}}</p>
+            {% for result in page.object_list %}
+                <p>{{result.object.generalItem}} {{result.object.addiitonalName}}</p>
+            {% empty %}
+                <p>Search performed; no results</p>
+            {% endfor %}
+        {% else %}
+            <p>no query found</p>
+        {% endif %}
+        
+        
+        <script>
+            var productList;
+
+
+            $(".subHeader").on("click", function(){
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.maxHeight){
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } 
+            });
+            $(document).ready(function(){
+
+                //For URL Integration
+                var gendersList_json_string = unescape(document.getElementById("gendersList_jsonHolder").innerHTML); 
+                var gendersList = JSON.parse(gendersList_json_string);
+
+                var shoeStyleList_json_string = unescape(document.getElementById("shoeStyleList_jsonHolder").innerHTML); 
+                var shoeStyleList = JSON.parse(shoeStyleList_json_string);
+
+                var brandsList_json_string = unescape(document.getElementById("brandsList_jsonHolder").innerHTML); 
+                var brandsList = JSON.parse(brandsList_json_string);
+
+                var colorsList_json_string = unescape(document.getElementById("colorsList_jsonHolder").innerHTML); 
+                var colorsList = JSON.parse(colorsList_json_string);
+
+                $.each(gendersList, function(key, value){
+                    document.getElementById(value).checked = true;
+                    //$("#"+value).prop("checked", true);
+                });
+                $.each(shoeStyleList, function(key, value){
+                    document.getElementById(value).checked = true;
+                    //$("#"+value).prop("checked", true);
+                });
+                $.each(brandsList, function(key, value){
+                    document.getElementById(value).checked = true;
+                    //$("#"+value).prop("checked", true);
+                });
+                $.each(colorsList, function(key, value){
+                    document.getElementById(value).checked = true;
+                    //document.getElementById(value).prop("checked", true);
+                });
+
+            });
+
+
+            //See all button when clicked
+            $('#seeAll').on('click', function(){
+                $('.checkboxInput').each(function(index){
+                    this.checked = false;
+                });
+
+                var orderValue = $('#productOrder').val(); 
+                alert('orderValue: '+orderValue);
+
+                $.ajax({
+                    url: '/product/productFilter/',
+                    data: {
+                        'status': "all",
+                        'orderValue': orderValue,
+                    },
+                    type: "GET",
+                    dataType: "html",
+                    success:function(data){
+                        $('#productDisplay').html(data);     
+
+                        
+                        window.history.replaceState({}, 'productListing', 'all' )
+                        
+                        //note: by doing replace(), the page is automatically refreshed, defeating the purpose of ajax
+                        //var currentURL = window.location.href ;
+                        //window.location.href = window.location.href.replace(currentURL.split('product/')[1], 'footwear/all');
+
+                       
+
+                    },       
+                    error:function(data){
+                        alert("fail");
+                    },      
+                });          
+            });
+
+            $('.checkboxInput').on('change', function(e){
+                var status;
+                var genderFilter = document.getElementsByClassName("genderFilter");
+                var styleFilter = document.getElementsByClassName("styleFilter");
+                var brandFilter = document.getElementsByClassName("brandFilter");
+                var colorFilter = document.getElementsByClassName("colorFilter");
+                var genderCheckedList, styleCheckedList, brandCheckedList, colorCheckedList;
+                genderCheckedList = [];
+                styleCheckedList = [];
+                brandCheckedList = [];
+                colorCheckedList = [];
+                //Filter section to checked for which boxes are checked
+                $(genderFilter).each(function(index){    
+                    if(genderFilter[index].checked==true){             
+                        genderCheckedList.push(genderFilter[index].value);             
+                    }                   
+                });
+                $(styleFilter).each(function(index){    
+                    if(styleFilter[index].checked==true){             
+                        styleCheckedList.push(styleFilter[index].value);                       
+                    }                   
+                });
+                $(brandFilter).each(function(index){    
+                    if(brandFilter[index].checked==true){             
+                        brandCheckedList.push(brandFilter[index].value);                       
+                    }                   
+                });
+                $(colorFilter).each(function(index){    
+                    if(colorFilter[index].checked==true){             
+                        colorCheckedList.push(colorFilter[index].value);                       
+                    }                   
+                });
+
+                if ((genderCheckedList.length==0) && (styleCheckedList.length==0) && (brandCheckedList.length==0) && (colorCheckedList.length==0)){
+                    status = 'all';
+                }
+                else{
+                    status = 'filtered';
+                }
+
+                var serialized = $('#checkbox-container').serialize();
+                if (serialized==""){
+                    serialized = "all";
+                }
+                
+                var orderValue = $('#productOrder').val(); 
+                alert('orderValue: '+orderValue);
+                //ajax carried out when filter button pressed
+                $.ajax({
+                    url: '/product/productFilter/',
+                    data: {
+                        'status': status,
+                        'genderFilter[]':genderCheckedList,
+                        'styleFilter[]':styleCheckedList,
+                        'brandFilter[]':brandCheckedList,
+                        'colorFilter[]':colorCheckedList,
+                        'orderValue': orderValue,
+                    },
+                    type: "GET",
+                    dataType: "html",
+                    success:function(data){
+                        $('#productDisplay').html(data);
+
+                        var currentURL = window.location.href ;
+                        window.history.replaceState({}, 'productListing', serialized)
+                        //replace() automatically refreshes the page
+                        //window.location.href = window.location.href.replace(currentURL.split('product/')[1], 'footwear/'+serialized);
+                        //histroy.href = window.location.href.replace(currentURL.split('product/')[1], 'footwear/'+serialized);
+
+
+                    },       
+                    error:function(data){
+                        alert("fail");
+                    },      
+                });
+            });
+
+            $("#productOrder").on('change', function(){
+                var orderValue = this.value;
+                var status;                
+                var genderFilter = document.getElementsByClassName("genderFilter");
+                var styleFilter = document.getElementsByClassName("styleFilter");
+                var brandFilter = document.getElementsByClassName("brandFilter");
+                var colorFilter = document.getElementsByClassName("colorFilter");
+                var genderCheckedList, styleCheckedList, brandCheckedList, colorCheckedList;
+                genderCheckedList = [];
+                styleCheckedList = [];
+                brandCheckedList = [];
+                colorCheckedList = [];
+
+                //Filter section to checked for which boxes are checked
+                $(genderFilter).each(function(index){    
+                    if(genderFilter[index].checked==true){             
+                        genderCheckedList.push(genderFilter[index].value);                       
+                    }                   
+                });
+                $(styleFilter).each(function(index){    
+                    if(styleFilter[index].checked==true){             
+                        styleCheckedList.push(styleFilter[index].value);                       
+                    }                   
+                });
+                $(brandFilter).each(function(index){    
+                    if(brandFilter[index].checked==true){             
+                        brandCheckedList.push(brandFilter[index].value);                       
+                    }                   
+                });
+                $(colorFilter).each(function(index){    
+                    if(colorFilter[index].checked==true){             
+                        colorCheckedList.push(colorFilter[index].value);                       
+                    }                   
+                });
+                
+                if ((genderCheckedList.length==0) && (styleCheckedList.length==0) && (brandCheckedList.length==0) && (colorCheckedList.length==0)){
+                    status = 'all';
+                }
+                else{
+                    status = 'filtered';
+                }
+                alert('orderValue: '+ orderValue);
+
+
+                $.ajax({
+                    url: '/product/productFilter/',
+                    data: {
+                        'status': status,
+                        'genderFilter[]':genderCheckedList,
+                        'styleFilter[]':styleCheckedList,
+                        'brandFilter[]':brandCheckedList,
+                        'colorFilter[]':colorCheckedList,
+                        'orderValue': orderValue,
+                    },           
+                    type: "GET",
+                    dataType: "html",
+                    success: function(data){
+                        $('#productDisplay').html(data);
+                    },
+                    error: function(data){
+                        alert("Error in Reorder Select Box, Please refresh page");
+                    }
+
+                });
+
+            });
+
+
+        </script>
+
+        </body>
+    {% endblock %}
+</html>

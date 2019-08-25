@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load customTemplateFootwear %}
+
+
+<html>
+    <head>
+        {% block cssFiles %}
+            <link rel="stylesheet" type="text/css" href="{% static 'items/styleItemPage.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'items/styleItemTable.css' %}" />
+        {% endblock %}
+
+        {% block title %} {{selectedProduct.generalItem.shoeName}} {%endblock%}
+
+    </head>
+
+    {% block body %}
+
+
+    <body onload="picSelect()">
+        <h1 class="productName">{{selectedProduct.generalItem.shoeName}} 
+            {% if selectedProduct.additionalName != None %}
+                "{{selectedProduct.additionalName}}""
+            {% endif %}
+        </h1>
+
+        <h3 class="productGender">{{selectedProduct.generalItem.gender}}</h3>
+        <br>
+        <div class="greaterContainer">
+            <!--For Left Picture Section-->
+            <div class="col-sm-6 subContainer" >
+                <div class="greaterPicContainer">
+                    <div class="selectedPicContainer">
+                        <img id="selectedPic" src="{{selectedProduct.displayPic.url}}">
+                    </div>
+                    <div class="otherProductPics" >
+                        <img onclick="imageSwitch('displayPic')" id="displayPic" class="sidePics" src="{{selectedProduct.displayPic.url}}">
+                        {% for selectedProductPic in relatedPics %}
+                            <img onclick="imageSwitch('{{selectedProductPic.image.url}}')" id="{{selectedProductPic.image.url}}" class="sidePics" src="{{selectedProductPic.image.url}}">    
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <p id="numOfColors">{{numOfColors}} Total Colorways Available</p>
+                <p id="numOfPages"></p>
+                <div class="colorSelectContainer">
+                    <button class="sidePicArrow arrowLeft">&#11207</button>
+                        {% for selectedRow in numOfRow%}
+                            <div class="productPhotosContainer notSelectedColorwayRow" id="photoContainer-{{selectedRow}}">
+                                {% with startIndex=selectedRow|mul:numOfColPic %}
+                                {% for col in numOfColPicRange %}
+                                    {% with picIndex=startIndex|adder:col %}
+                                        {% if numOfColors > picIndex %}
+                                            {% with selectedColor=allColors|index:picIndex %}
+                                                <a class="showColorPic" id="pic-{{selectedColor.id}}" href="{% url 'products:productPage' generalItem_slug=selectedColor.slug Product_id=selectedColor.id %}">
+                                                    <img  class="colorwayPics" src="{{selectedColor.displayPic.url}}" >
+                                                </a>
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                                {% endwith %}
+                            </div>
+                        {% endfor %}
+                    <button class="sidePicArrow arrowRight">&#11208</button>        
+                </div>
+                    
+                <div class="descriptionContainer">
+                    <h3 class="DesTitle" style="text-decoration:underline">Selected Colorway: </h3>
+                    <h3 class="descriptionText">{{selectedProduct.colorway}}</h3>
+                </div>
+                <br>
+                <div class="descriptionContainer">
+                    <h3 class="DesTitle" style="text-decoration:underline">Description: </h3>
+                    <h4 class="descriptionText">{{selectedProduct.generalItem.shoeDescription}}</h4>
+                    {% if selectedProduct.productDescription != None %}
+                        <h4 class="descriptionText">{{selectedProduct.productDescription}}</h4>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!--For Right Option Selection Section-->
+            <div class="col-sm-6 subContainer">
+                {% if availability == "Available"%}
+                    <!--Change of Tab Buttons-->
+                    <div class="descriptionContainer tabSelectionContainer">
+                        <button class="tablink" id="sizeTabBtn">Select Size</button>
+                        <button class="tablink" id="storeLocationTabBtn">Select Store Location</button>
+                    </div>
+
+                    <!--Content in the Selection Tabs-->
+                    <div class="descriptionContainer tabContentContainer">
+                        <!--Select Size First Tab-->
+                        <div id="sizeTab" class="tabContent">
+                            <!--Select Box-->
+                            <div id="sizeSelectionSize"></div>
+                            <br><br>
+                            <!--Loaded div element to load table containing all stores containing size selected in select box-->
+                            <div class="storeLocationTable" id="storeLocationTableSize"></div>
+                            <br><br>
+                            <div class="map" id="sizeMap"></div>
+                            <!--Error message, if user disables user location or not supported by browser-->
+                            <h5 id="userLocErrorMsgSize" style="display:none" class="userLocErrorMsg"></h5>
+                            <!--Add to Chart Button, returns ID of store inventory for selected Item-->
+                            <div class="addToChartContainer" id="addToChartBtnContainerSize">
+                                <button class="addToChart" id="addToChartBtnSize"  >Add to Chart</button>
+                                <p id="addToChartBtnSelectedProductIDSize" style="display:none">PlaceHolder for Selected Item ID</p>
+                            </div>
+                        </div>
+                        <!--Store Location Tab-->
+                        <div id="storeLocationTab" class="tabContent">
+                            <!--Loaded div element to load table containing all available store locations to puchase from-->
+                            <div class="storeLocationTable" id="storeLocationTableStore"></div>
+                            <br><br>
+                            <!--Loaded div element to load map containing all available store locations to puchase from-->
+                            <div class="map" id="storeLocationMap"></div>
+                            <!--Error message, if user disables user location or not supported by browser-->
+                            <h5 id="userLocErrorMsgStoreLoc" style="display:none" class="userLocErrorMsg"></h5>
+                            <!--Div element to load the size selection available in the store location selected-->
+                            <div id="sizeSelectionStoreLoc"></div> 
+                            <br><br>
+                            <!--Add to Chart Button, returns ID of store inventory for selected Item-->
+                            <div class="addToChartContainer" id="addToChartBtnContainerStoreLoc" style="display:none">
+                                <button class="addToChart" id="addToChartBtnStoreLoc" >Add to Chart</button>
+                                <!--used to store what sizes are added to chart-->
+                                <p id="addToChartBtnSelectedProductIDStoreLoc" style="display:none" >PlaceHolder</p>
+                            </div>
+                        </div> 
+                    </div>
+
+                {% else %}
+                    <div class="noStockDisplayDiv">
+                        <h1 class="noStockDisplay">No Stock</h1>
+                    </div>
+                {% endif %}
+                <p id="test2">Store Inventory ID to be sent to shopping chart</p>
+                <p id="productID" style="display:none">{{Product_id}}</p>
+            </div>
+        </div>
+
+        <p id="userLat" >User Lat</p>
+        <p id="userLng" >User Lng</p>
+        <p id="tab">tab selected</p>
+
+        <p id="sizeTabMapStatus">not loaded</p>
+        <p id="storeLocTabMapStatus">not loaded</p>
+
+        <p id="testVar"></p>
+
+
+    </body>
+
+    <script>
+        //Section for controlling right picture scrolling and colorway options
+
+        $('.arrowLeft').on('click', function(){
+            var currentlySelectedIndex, photoContainerList, selectedRow, numOfColorwayRows; 
+            photoContainerList = document.getElementsByClassName("productPhotosContainer");
+            $(photoContainerList).each(function(index){
+                if (photoContainerList[index].classList.contains('selectedColorwayRow')==true){
+                    currentlySelectedIndex = index; 
+                }
+            });
+            if (currentlySelectedIndex > 0){
+                photoContainerList[currentlySelectedIndex].classList.remove("selectedColorwayRow");
+                photoContainerList[currentlySelectedIndex].classList.add("notSelectedColorwayRow");
+                currentlySelectedIndex= currentlySelectedIndex-1;
+                photoContainerList[currentlySelectedIndex].classList.remove("notSelectedColorwayRow");
+                photoContainerList[currentlySelectedIndex].classList.add("selectedColorwayRow");  
+                numOfColorwayRows=photoContainerList.length;
+                selectedRow = currentlySelectedIndex+1;
+                document.getElementById("numOfPages").innerHTML="Slide " + selectedRow + " of " + numOfColorwayRows;
+            }
+        });
+
+        $('.arrowRight').on('click', function(){
+            var currentlySelectedIndex, photoContainerList; 
+            photoContainerList = document.getElementsByClassName("productPhotosContainer");
+            $(photoContainerList).each(function(index){
+                if (photoContainerList[index].classList.contains('selectedColorwayRow')==true){
+                    currentlySelectedIndex = index;     
+                }
+            });
+            if (currentlySelectedIndex < photoContainerList.length-1){
+                photoContainerList[currentlySelectedIndex].classList.remove("selectedColorwayRow");
+                photoContainerList[currentlySelectedIndex].classList.add("notSelectedColorwayRow");
+                currentlySelectedIndex= currentlySelectedIndex+1;
+                photoContainerList[currentlySelectedIndex].classList.remove("notSelectedColorwayRow");
+                photoContainerList[currentlySelectedIndex].classList.add("selectedColorwayRow");  
+                numOfColorwayRows=photoContainerList.length;
+                selectedRow = currentlySelectedIndex+1;
+                document.getElementById("numOfPages").innerHTML="Slide " + selectedRow + " of " + numOfColorwayRows;
+            }
+        });
+
+        function picSelect(){
+            prevPicId = "displayPic"
+            document.getElementById("selectedPic").src="{{selectedProduct.displayPic.url}}";
+            document.getElementById("displayPic").style.border= "1px solid black";
+            document.getElementById("displayPic").style.borderLeft= "1px solid black";
+        }
+        //Function to change the larger left side display pic depending on click of pictures on sidebar
+        function imageSwitch(pic_Id){
+            var imgs = document.getElementsByClassName("sidePics");
+            var i;
+            //remove borders for all side pics
+            for (i=0; i < imgs.length ; i++){
+                imgs[i].style.border="none";
+            }      
+            //change the larger left pic
+            if (pic_Id == "displayPic"){
+                document.getElementById("displayPic").style.border="1px solid black";    
+                document.getElementById("selectedPic").src= "{{selectedProduct.displayPic.url}}";  
+            }
+            else{
+                document.getElementById(pic_Id).style.border="1px solid black";
+                document.getElementById("selectedPic").src= pic_Id;
+            }
+        }
+        
+        //section for tabs, tabls, and map utility
+        var mapSizeTab;
+        var mapStoreLocTab;
+        var markerClusters;
+        var userInfoWindowSize, userInfoWindowStoreLoc; //probably used later for displaying "you" when user clicks user point
+
+        var markers = [];
+        var infos = []; //for info pages on google maps
+        var testVar;
+        document.getElementById("testVar").innerHTML = "seen test";
+
+
+        //$(document).ready(function(){
+        function initMap(){
+            var colorwayRows, selectedImage, numOfColorwayRows, selectedRow;
+            colorwayRows = document.getElementsByClassName("productPhotosContainer");
+            
+            $(colorwayRows).each(function(index){
+                selectedImage = this.getElementsByClassName("showColorPic");
+                $(selectedImage).each(function(key){
+                    if (selectedImage[key].id == 'pic-{{selectedProduct.id}}'){
+                        selectedImage[key].classList.add("selectedColorwayPic")
+                        colorwayRows[index].classList.add("selectedColorwayRow");
+                        colorwayRows[index].classList.remove("notSelectedColorwayRow");
+                        selectedRow = index+1;
+                    }                        
+                });
+            });
+            numOfColorwayRows = colorwayRows.length;
+            document.getElementById("numOfPages").innerHTML="Slide " + selectedRow + " of " + numOfColorwayRows;
+
+            userInfoWindowSize = new google.maps.InfoWindow;
+            userInfoWindowStoreLoc = new google.maps.InfoWindow;
+
+            if (navigator.geolocation){
+                navigator.geolocation.getCurrentPosition(function(position){
+                    var userPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                    };
+                    document.getElementById("userLat").innerHTML = userPos.lat;
+                    document.getElementById("userLng").innerHTML = userPos.lng;
+
+                    mapSizeTab = new google.maps.Map(document.getElementById('sizeMap'), {
+                        zoom: 11,
+                        center: userPos
+                    });   
+                    mapStoreLocTab = new google.maps.Map(document.getElementById('storeLocationMap'), {
+                        zoom: 11,
+                        center: userPos
+                    }); 
+                    userInfoWindowSize.setPosition(userPos)
+                    userInfoWindowSize.setContent('You');
+                    userInfoWindowSize.open(mapSizeTab);
+                    userInfoWindowStoreLoc.setPosition(userPos)
+                    userInfoWindowStoreLoc.setContent('You');                    
+                    userInfoWindowStoreLoc.open(mapStoreLocTab);
+
+                    document.getElementById("userLocErrorMsgStoreLoc").innerHTML = "";
+                    document.getElementById("userLocErrorMsgSize").innerHTML = "";
+
+                }, function(){
+                    mapSizeTab = new google.maps.Map(document.getElementById('sizeMap'), {
+                        zoom: 12,
+                        center: {lat: 43.653908, lng: -79.384293}
+                    });      
+                    mapStoreLocTab = new google.maps.Map(document.getElementById('storeLocationMap'), {
+                        zoom: 11,
+                        center: {lat: 43.653908, lng: -79.384293}
+                    }); 
+                    document.getElementById("userLocErrorMsgStoreLoc").innerHTML = "User Location Disabled";
+                    document.getElementById("userLocErrorMsgSize").innerHTML = "User Location Disabled";
+                });
+            }
+            document.getElementById("sizeMap").style.display = "none";
+            document.getElementById("storeLocationMap").style.display = "none";    
+        }; 
+
+
+        //function for clicking the Size tab
+        $('#sizeTabBtn').on('click', function(){
+            document.getElementById("tab").innerHTML = "size";
+
+            //hide and display desired tabs
+            document.getElementById('sizeTab').style.display="inline-block";
+            document.getElementById('storeLocationTab').style.display="None";
+
+            //change appearance of tab buttons
+            document.getElementById('storeLocationTabBtn').style.borderBottom="1px solid grey";
+            this.style.borderBottom="None";
+
+            //set size selection box for store location tab to initial value (none)
+            document.getElementById("sizeSelectionStoreLoc").value="none";
+
+            //hide size selection box for store location tab
+            document.getElementById("sizeSelectionStoreLoc").style.display="none"; 
+            
+            //hide add to chart button for this tab
+            document.getElementById("addToChartBtnSize").style.display="none";
+
+            //hide map on this tab
+            document.getElementById("sizeMap").style.display = "none";
+
+            //hide table
+            document.getElementById('storeLocationTableSize').style.display = "none";
+
+            //hide user location error msg
+            document.getElementById("userLocErrorMsgSize").style.display = "none";
+
+            //Note: storeID does not need to be sent since storeID is selected after size selection
+            $.ajax({
+                url: '/product/selection/filterSizeAjax/',
+                data:{
+                    'productID': document.getElementById("productID").innerHTML,
+                    'tab': 'size',
+                    'storeLocationID': 'none',
+                },
+                type: "GET",
+                success: function(data){
+                    $("#sizeSelectionSize").html(data);
+                    document.getElementById("sizeSelectionSize").value="none"
+                },
+                error: function(data){
+                    alert("size tab error, please refresh page");
+                }
+            });
+        });
+
+        //function for clicking the store Location tab 
+        $('#storeLocationTabBtn').on("click", function(){
+            document.getElementById("tab").innerHTML = "storeLocation";
+            //hide and display desired tabs
+            document.getElementById('storeLocationTab').style.display="inline-block";
+            document.getElementById('sizeTab').style.display="None";
+
+            //change appearance of tab buttons
+            document.getElementById('sizeTabBtn').style.borderBottom="1px solid grey";
+            this.style.borderBottom="None";
+
+            //hide store location selection table on store location tab
+            document.getElementById("storeLocationTableSize").style.display="none";
+
+            //set size selection box for size tab to inital value (none)
+            document.getElementById("sizeSelectionSize").value="none";
+
+            //hide add to chart button for this tab
+            document.getElementById("addToChartBtnContainerStoreLoc").style.display="none";  
+
+            //hide map on this tab
+            document.getElementById("storeLocationMap").style.display = "none";
+
+            //hide user location error msg
+            document.getElementById("userLocErrorMsgStoreLoc").style.display = "none";
+
+            $.ajax({
+                url:'/product/table/filterTableAjax/',
+                data:{
+
+                    'filteredCity': 'none',
+                    'productID': document.getElementById("productID").innerHTML,
+                    'tab': 'storeLoc',
+                },
+                type: "GET",
+                success: function(data){
+                    $("#storeLocationTableStore").html(data);
+                    document.getElementById("storeLocationTableStore").style.display="";
+                },
+                error: function(data){
+                    alert("Store Location Tab Table Error, please refresh page");
+                },
+            }); 
+        });
+
+
+        //function to activate the default opened size tab
+        document.getElementById("sizeTabBtn").click();
+
+        //function called from sizeSelection.html file calls from store loc tab        
+        $('#sizeSelectionStoreLoc').on('change', function(){
+            selectedInventoryID= $('#sizeSelectionStoreLoc option:selected').val();
+            if (selectedInventoryID == 'none') {
+                document.getElementById("addToChartBtnSelectedProductIDStoreLoc").innerHTML = "size selected needed";
+                document.getElementById("addToChartBtnContainerStoreLoc").style.display="none";
+            }
+            else {
+                selectedInventoryID = (selectedInventoryID.split("_"))[1];
+                document.getElementById("addToChartBtnContainerStoreLoc").style.display="";
+                document.getElementById("addToChartBtnSelectedProductIDStoreLoc").innerHTML = selectedInventoryID;    
+            }
+            //hide user location error msg
+            document.getElementById("userLocErrorMsgStoreLoc").style.display = "none";
+
+
+        });
+
+        //function called from sizeSelection.html file calls from size tab       
+        $('#sizeSelectionSize').on('change', function(){
+            selectedSizeID= $('#sizeSelectionSize option:selected').val();
+  
+
+            if (selectedSizeID == 'none'){
+                document.getElementById("storeLocationTableSize").style.display="none";
+                document.getElementById("sizeMap").style.display="none";
+                document.getElementById("addToChartBtnSelectedProductIDSize").style.display="none";
+                document.getElementById("userLocErrorMsgSize").style.display = "none";
+                document.getElementById("addToChartBtnSize").style.display = "none";
+            }
+            else {
+                selectedSizeID = (selectedSizeID.split("_"))[1];
+                
+                $.ajax({
+                    url: '/product/table/filterTableAjax/',
+                    data:{
+                        'filteredCity': 'none',
+                        'productID': document.getElementById("productID").innerHTML,
+                        'size': selectedSizeID,
+                        'tab': 'size',                        
+                    }, 
+                    type: "GET",
+                    success: function (data){
+                        $("#storeLocationTableSize").html(data);
+                        document.getElementById("storeLocationTableSize").style.display="";
+                        document.getElementById("storeMapLink").innerHTML = "Hide Store Map";
+                        document.getElementById("storeMapLink").click();   
+                        document.getElementById("addToChartBtnSize").style.display = "none";
+                        
+                    },
+                    error: function(data){
+                        alert("Error loading size selection box, please refresh page");
+                    }
+                });   
+            }
+        });
+
+        //when a row of the table is clicked, NOTE: $('.tableRow').on('click', function(){...}); ajax call doesnt work
+        function rowClicked(tab, rowID){
+            var i;
+            var rows;
+            rows = document.getElementsByClassName("tableRow");  
+            for (i=0; i<rows.length; i++){
+                    rows[i].classList.remove("selected");          
+            }
+            document.getElementById(rowID).classList.add("selected");
+            if (tab == 'size'){
+
+                document.getElementById("addToChartBtnSize").style.display="";
+
+
+
+            } else if (tab=='storeLoc'){
+                storeLocationID = (rowID.split("_"))[1];
+
+            //Note: storeID does not need to be sent since storeID is selected after size selection
+                $.ajax({
+                    url: '/product/selection/filterSizeAjax/',
+                    data:{
+                        'productID': document.getElementById("productID").innerHTML,
+                        'tab': 'storeLoc',
+                        'storeLocationID': storeLocationID,
+                    },
+                    type: "GET",
+                    success: function(data){
+                        $("#sizeSelectionStoreLoc").html(data);
+                        document.getElementById("sizeSelectionSize").value="";
+                        document.getElementById("sizeSelectionStoreLoc").style.display="";
+                    },
+                    error: function(data){
+                        alert("Error when displaying size selection box, please refresh page");
+                    }
+                });
+            }
+        }
+
+        // addToChart function called when add to chart button called, corresponding tab (size or store location) sent via "tab" arguement
+        $('.addToChart').on('click', function(){
+            if (this.id == 'addToChartBtnSize'){
+                //loop below is only used to obtained the ID of the StoreInventory for the selected add to chart 
+                $('.selected').each(function () {
+                    selectedStoreInvID = $(this).attr('id');
+                });
+                selectedStoreInvID = (selectedStoreInvID.split("_"))[1];                
+            }
+            else if(this.id == 'addToChartBtnStoreLoc'){
+                selectedStoreInvID = document.getElementById("addToChartBtnSelectedProductIDStoreLoc").innerHTML;
+            }
+            document.getElementById("test2").innerHTML= selectedStoreInvID + " Store Inventory ID Added to Chart";
+
+
+            alert("Add to chart button clicked");
+        });
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAwnQG_angNsf_RKtA50Iu4gCu1du8XGb0&callback=initMap" async defer></script>
+    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+    {%endblock%}
+</html> 
