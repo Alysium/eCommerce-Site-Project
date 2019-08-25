@@ -1,0 +1,126 @@
+.ItemBox{
+    border: 1px solid black;
+}
+
+.display{
+	grid-column: 2 / 7;
+	margin: 0;
+}
+
+
+
+.productListingBox{
+    height: 100%;
+	background-color: white;
+    display: table-cell;
+    text-align: center; 
+    padding: 5px;
+    margin: 0;
+    
+}
+
+.title{
+    text-transform: capitalize;
+}
+
+.content{
+    padding: 0;
+    margin: 0;
+    vertical-align: middle;
+    text-align: center;
+	height: auto;
+    width: 100%;
+    left: 30px;
+}
+
+
+.productTitle{
+    font-family: 'Quicksand', sans-seriff;
+    color: black;
+    text-align: center;
+}
+
+.productDescription{
+    margin: 5px;
+    padding: 0;
+    font-family: 'Quicksand', sans-seriff;
+}
+
+.productLink{
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.displayPic{
+    width: 100%;
+    height:auto;
+}
+
+#productRow{
+    height: auto;
+    padding: 0;
+    margin: 0;
+    display: table;
+    width: 100%;
+}
+
+.colorway{
+    overflow: hidden;
+}
+
+.filterSection{
+    margin: 0;
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: #f1f1f1;
+}
+
+
+.subHeader{
+
+    width: 100%;
+    text-align: left;
+    font-family: 'Quicksand', sans-seriff;
+    background-color: white;
+    border:none;
+    border-top: 1px solid rgb(216, 216, 216);
+    border-bottom: 1px solid rgb(216, 216, 216); 
+    font-size: 20px;
+}
+
+
+.subHeader:hover{
+    background-color: rgb(197, 197, 197);
+}
+
+.subHeader:after {
+    content: '\002B';
+    color: black;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+}
+
+.active:after {
+    content: "\2212";
+}
+
+.avgPrice{
+    font-family: 'Quicksand', sans-seriff;
+    float: right;
+    margin: 0;
+}
+
+.checkboxLabel{
+    font-family: 'Quicksand', sans-seriff;
+}
+
+#productOrder{
+    width: 100%;
+    font-family: 'Quicksand', sans-seriff;
+    padding: 5px;
+}
+

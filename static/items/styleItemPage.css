@@ -1,0 +1,327 @@
+.greaterPicContainer{
+    border: 1px solid black;
+    display: grid;
+    grid-template-columns: 80% 1fr;
+}
+
+.selectedPicContainer{
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-bottom: 1px solid black;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.otherProductPics{
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+
+.productName{
+    color: black;
+    font-family: 'Quicksand', sans-seriff;
+    font-size: 75px;
+    width: 100%;
+    text-align: center;
+    font-weight: 500;
+    
+}
+
+.productGender{
+    width: 100%;
+    text-align: center;
+    font-weight: 100;
+    font-size: 25px;
+    color: grey;
+    font-family: 'Quicksand', sans-seriff;
+    padding: 0;
+    margin: 0;
+
+
+}
+.productAdditionalName{
+    color: black;
+    font-family: 'Quicksand', sans-seriff;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    
+}
+
+#selectedPic{
+    width: 100%;
+}
+
+.sidePics{
+    width: 100%;
+}
+
+.sidePics:hover{
+    border: 1px solid grey;
+}
+
+.colorSelectContainer{
+    display: grid;
+    grid-template-columns: 10% 80% 10%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.colorSelectPicsContainer{
+
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    
+}
+
+.colorSelectPicsContainer:hover{
+    border: 1px solid grey;
+
+}
+
+.sidePicArrow{
+    background-color: white;
+    color: grey;
+    border: none;
+    margin: 0;
+    padding: 0;
+    height: auto;
+    height: 100%;
+}
+
+.sidePicArrow:hover{
+    background-color: #DBDADA;
+
+}
+
+.arrowLeft{
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.arrowRight{
+    grid-column-start: 3;
+    grid-column-end: 4;
+}
+
+.productPhotosContainer{
+    margin: 0;
+    padding: 0;
+    grid-column-start: 2;
+    grid-column-end: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+
+
+}
+
+.notSelectedColorwayRow{
+    display: none;
+}
+
+.colorwayPics{
+    width: 100%;
+}
+
+
+.selectedColorwayPic{
+    border: 1px solid black;
+}
+
+.selectedColorwayRow{
+    display: grid;
+}
+
+
+.showColorPic{
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.showColorPic:hover{
+    border: 1px solid #C8C8C8;
+}
+
+.greaterContainer{
+    margin: auto;
+    width: 85%;
+    height: 100%;
+    padding: 0;
+}
+
+
+.subContainer{
+    margin: 0;
+    padding: 0;
+
+}
+
+.descriptionContainer{
+    width: 100%;
+}
+
+.DesTitle{
+    font-family: 'Quicksand', sans-seriff;
+    display: inline;
+}
+
+.descriptionText{
+    font-family: 'Quicksand', sans-seriff;
+    color: grey;
+}
+
+#numOfColors{
+    margin-top: 10px;
+    font-family: 'Quicksand', sans-seriff;
+    display: inline-block;
+}
+
+#numOfPages{
+    margin-top: 10px;
+    font-family: 'Quicksand', sans-seriff;
+    display: inline-block;
+    float: right;
+}
+
+.tabSelectionContainer{
+
+    width: 100%;
+    border: 1px solid grey;
+}
+
+.tablink{
+   
+    border-top: 1px solid grey;
+    border-right: 1px solid grey;
+    border-left: 1px solid grey;
+    background-color: white;
+    font-family: 'Quicksand', sans-seriff;
+    width: 50%;
+    float: left;
+    cursor: pointer;
+}
+
+.tablink:hover{
+    background-color: #D2D2D2;
+}
+
+.tabContentContainer{
+    border: 1px solid grey;
+}
+
+.tabContent{
+    border-bottom: 1px solid grey;
+    border-left: 1px solid grey;
+    border-right: 1px solid grey;
+    background-color: white;
+    display: none;
+    width: 100%;
+
+}
+
+.tabHeader{
+    margin-left: 10px;
+    font-family: 'Quicksand', sans-seriff;
+}
+
+
+select{
+    width: 75%;
+    text-align: center;
+    color: grey;
+    font-family: 'Quicksand', sans-seriff;
+    height: 40px;
+    position: relative;
+    left: 12.5%;
+}
+
+.citySelectBoxCtn{
+    width: 100%;
+    display: block;
+
+}
+
+.citySelectBox{
+    width: 25%;
+    float: left;
+    left: 0;
+    color: black;
+    height: 30px;
+    display: block;
+    font-family: 'Quicksand', sans-seriff;
+}
+
+
+option {
+    font-family: 'Quicksand', sans-seriff;
+    padding: 20px;
+}
+
+.selected{
+    border: 1px solid black;
+    background-color: #B7B7B7;
+}
+
+.addToChartContainer{
+    width: 100%;
+    text-align: center;
+}
+
+.addToChart{
+    margin-top: 50px;
+    background-color: #868080;
+    text-align: center;
+    width: 75%;
+    color: white;
+    font-family: 'Quicksand', sans-seriff;
+    border: none;
+    height: 60px;
+    font-size: 30px;
+}
+
+.addToChart:hover{
+    background-color: #2A2A2A;
+}
+
+.noStockDisplayDiv{
+    width: 100%;
+}
+
+.noStockDisplay{
+    font-family: 'Quicksand', sans-seriff;
+    text-align: center;
+}
+
+.map{
+    height: 300px;
+
+}
+
+.tabStepTitle{
+    margin-bottom: 10px;
+}
+
+.userLocErrorMsg{
+    color: red;
+    font-family: 'Quicksand', sans-seriff;
+}
+
+.infoWindowBtn{
+    border: 1px solid grey;
+    font-family: 'Quicksand', sans-seriff;
+    color: black;
+    transition: 0.3s;
+    background-color: white;
+}
+
+.infoWindowBtn:hover{
+    background-color: rgb(209, 209, 209);
+}
+
+
+

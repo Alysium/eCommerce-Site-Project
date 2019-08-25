@@ -1,0 +1,62 @@
+.sectionBanner{
+    width: 80%;
+    border: 1px solid black;
+    margin: auto;
+    margin-bottom: 25px;
+    
+}
+
+.sectionTitle{
+    font-family: 'Quicksand', sans-seriff;
+    text-align: center;
+}
+
+.slideshow{
+    width: 100%;
+    border: 1px solid red;
+}
+
+.titleContainer{
+    border-bottom: 1px solid rgb(223, 222, 222);
+}
+
+.productSectionTitle{
+    font-family: 'Quicksand', sans-seriff;
+    display: inline-block;
+    margin: 0;
+}
+
+.seeAllLink{
+    font-family: 'Quicksand', sans-seriff;
+    color: grey;
+    font-size: 15px; 
+    display: inline-block;
+    margin-left: 20px;
+
+}
+
+.productSlideshow{  
+    width: 100%;
+    border: 1px solid blue;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

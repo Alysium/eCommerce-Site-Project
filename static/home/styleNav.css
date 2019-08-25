@@ -1,0 +1,137 @@
+body{
+	margin: 0;
+	padding: 0;
+}
+
+.cusNav{
+		background-color: white;
+}
+
+#Logo{
+	display: block;
+	height: 60px;
+	margin-right: 20px;
+	margin-left: 0;
+}
+
+
+#dropbtn{
+	color: black;
+	background-color: white;
+	font-family: 'Quicksand', sans-seriff;
+	text-decoration: underline;
+	display: flux;
+	float: left;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-left: 10px;
+	padding-right: 10px;
+
+	
+}
+
+#dropbtn:hover{
+	color: white;
+	background-color: #A9A9A9;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+	top: 60px;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	z-index: 1;
+
+}
+
+.dropdown-content a {
+	font-family: 'Quicksand', sans-seriff;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+	text-align: left;
+	float: none;
+	width: 100%
+}
+
+.dropdown-content a:hover {
+	background-color: #ddd;
+}
+
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover #dropbtn {
+    background-color: #CFCFCF;
+	color: white;
+}
+
+#button{
+	color: black;
+	background-color: white;
+	font-family: 'Quicksand', sans-seriff;
+	text-decoration: underline;
+	display: flux;
+	float: left;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-left: 10px;
+	padding-right: 10px;
+	transition: 0.3s;
+}
+
+#button:hover{
+	color: white;
+	background-color: #8B8B8B;
+}
+
+
+.categoryDropDown{
+	text-transform: capitalize;
+}
+
+.bottomBanner{
+	background-color: rgb(248, 248, 248);
+	width: 100%;
+	display: flex;
+}
+
+.bottomBannerListing{
+	font-family: 'Quicksand', sans-seriff;
+	list-style-type: none;
+    padding-left: 10%;
+
+}
+
+.bottomBannerColumn{
+	padding: 10px;
+	height: 200px;
+	display: inline-block;
+
+}
+
+.bottomBannerLink{
+	color: grey;
+	margin: 0;
+	padding: 0;
+}
+
+.bottomBannerTitle{
+	padding-left: 10%;
+}
+
+.bottomBannerContentCtn{
+    margin: auto;
+    width: 85%;
+    height: 100%;
+    padding: 0;
+}

@@ -1,0 +1,15 @@
+.selectBoxContainer{
+    width: 100%;
+}
+
+.selectBox{
+    width: 100%;
+    font-family: 'Quicksand', sans-seriff;
+    text-transform: capitalize;
+}
+
+.option{
+    font-family: 'Quicksand', sans-seriff;
+    text-transform: capitalize;
+}
+
