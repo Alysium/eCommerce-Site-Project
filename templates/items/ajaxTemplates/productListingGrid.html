@@ -1,0 +1,51 @@
+{% load static %}
+{% load customTemplateFootwear %}
+
+<html>
+    <head>
+
+    </head>
+
+    <body>
+        {% if noResults %}
+            <h3 class="NoStoreFoundMsg">No Footwear Found</h3>
+        {% endif %}
+        {% for row in numOfRow %}
+            <div id="productRow">
+            {% with startIndex=row|mul:numOfCol %}
+            {% for col in numOfColRange%}
+                {% with productIndex=startIndex|adder:col %}    
+                {% if amountOfProducts > productIndex%}
+                    {% with selectedProduct=qFootwear|index:productIndex %}
+                    <div class="col-xs-3 productListingBox">
+                        <div class="content">
+                            {% if selectedProduct.avgCost%}
+                                <h6 class="avgPrice"> Average Price: ${{selectedProduct.avgCost|floatformat:2}}</h6>
+                            {% else %}
+                                <h6 class="avgPrice">No Stock</h6>
+                            {% endif %}
+                            <a class="productLink" href="{% url 'products:productPage' generalItem_slug=selectedProduct.slug Product_id=selectedProduct.id %}">
+                                <img class="displayPic" alt="{{selectedProduct}}" src="{{selectedProduct.displayPic.url}}">
+                                <h4 class="productTitle">{{selectedProduct.generalItem.shoeName}} {{selectProduct.additionalName}} </h4>
+                                {% if selectedProduct.additionalName != None %}
+                                    <h5 class="productTitle" style="display:inline">"{{selectedProduct.additionalName}}"</h5>
+                                {% endif %}
+                            </a>
+                            <h6 class="productDescription">{{selectedProduct.generalItem.brand}}</h6>
+                            <h6 class="productDescription">{{selectedProduct.generalItem.gender}}</h6>
+                            <h6 class="productDescription">{{selectedProduct.generalItem.style}}</h6> 
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% endif %}
+                {% endwith %}
+            {% endfor %}
+            {% endwith %}
+            </div>
+        {% endfor %}
+
+    </body>
+
+
+</html>
+

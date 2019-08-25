@@ -1,0 +1,50 @@
+<html>
+    <body>
+        {% if tab == "size" %}
+            <table>
+                <tr>
+                    <th>Store</th>
+                    <th>City</th>
+                    <th>Address</th>
+                    <th>Price</th>
+                </tr>
+
+
+                {% for selectedInventoryListing in qStoreLocationListing %}
+                    <tr onclick="rowClicked('size', this.id)" class="tableRow size sizeTable" id="size_{{selectedInventoryListing.storeLocation.id}}">
+                        {% if selectedInventoryListing.quantity != 0 %}
+                            <td>{{selectedInventoryListing.storeLocation.id}}: {{selectedInventoryListing.storeLocation.parentStore.sName}}</td>
+                            <td>{{selectedInventoryListing.storeLocation.locationCity.city}}</td>
+                            <td>{{selectedInventoryListing.storeLocation.address}}</td>
+                            {% if selectedInventoryListing.sale == False %}
+                                <td>${{selectedInventoryListing.regularPrice}}</td>
+                            {% else %}
+                                <td>Sale: ${{selectedInventoryListing.salePrice}} (Regular:${{selectedInventoryListing.regularPrice}})</td>
+                            {% endif %}
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </table>
+
+        {% else %}
+            <table>
+                <tr>
+                    <th>Store</th>
+                    <th>City</th>
+                    <th>Address</th>
+                </tr>
+
+                {% for selectedStoreLoc in qStoreLocationListing %}
+                    <tr onclick="rowClicked('storeLoc', this.id)" class="tableRow storeLoc storeLocTable" id="storeLoc_{{selectedStoreLoc.id}}">
+                        <td>{{selectedStoreLoc.parentStore.sName}}</td>
+                        <td>{{selectedStoreLoc.locationCity}}</td>
+                        <td>{{selectedStoreLoc.address}}</td>
+                    </tr>
+                {% endfor %}
+
+            </table>
+
+        {% endif %}
+    </body>
+
+</html>

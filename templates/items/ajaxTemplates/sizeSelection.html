@@ -1,0 +1,37 @@
+<html>
+
+    <body>
+        <br>
+        <!--called when storeLocation tab selected-->
+        <h3 class="DesTitle tabStepTitle">Select an available size:</h3>
+        <br><br>
+        {% if tab == "storeLoc" %}
+            <select id="sizeSelectionStoreLoc">
+                <option value="none">Choose a size...</option>
+                {% for selectedSize in qSizes %}
+                    <option value="selectedSizeStoreLocTab_{{selectedSize.id}}">
+                        {{selectedSize.size}}: 
+                        {% if selectedSize.sale == False%}
+                            ${{selectedSize.regularPrice}}
+                        {% else %}
+                            Sale: ${{selectedSize.salePrice}} (Regular: ${{selectedSize.regularPrice}})
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        <!--called when size tab selected-->
+        {% else %}
+            <select id="sizeSelectionSize">
+                <option value="none" selected>Choose a size...</option>
+                {% for selectedSize in qSizes %}
+                    <option value="selectedSizeSizeTab_{{selectedSize.id}}">
+                        {{selectedSize.size}}
+                    </option>
+                {% endfor %}
+            </select>
+        {% endif %}
+
+    </body>
+
+
+</html>

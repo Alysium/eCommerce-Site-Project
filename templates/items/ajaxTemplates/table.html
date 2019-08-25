@@ -1,0 +1,412 @@
+{% load static %}
+
+<html>
+
+    <head>
+        
+        <link href='https://fonts.googleapis.com/css?family=Satisfy' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>	    
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" type="text/css" href="{% static 'home/styleHome.css' %}" />   
+        
+
+    </head>
+
+    <body>
+
+        <div>
+            <br>
+            <button class="storeMapLink" id="storeMapLink">Show Store Map</button>
+            <h3 class="DesTitle tabStepTitle">Select Store Location from Table: </h3>
+            <br>
+
+            {% if tab == "size" %}
+                <div class="citySelectBoxCtn" id="citySelectBoxCtnSize">
+                    <select id="citySelectBoxSize" class="citySelectBox">
+                        <option value="none">See All</option>
+                            {% for selectedCity in qCities %}
+                                <option value="{{selectedCity.id}}">{{selectedCity.country}}: {{selectedCity.city}}</option>
+                            {% endfor %}
+                    </select>
+                </div>
+
+                <div id="tableSize">
+                    <table>
+                        <tr>
+                            <th>Store</th>
+                            <th>City</th>
+                            <th>Address</th>
+                            <th>Price</th>
+                        </tr>
+                        {% for selectedInventoryListing in qStoreInventoryListing %}
+                            <tr onclick="rowClicked('size', this.id)" class="tableRow size sizeTable" id="size_{{selectedInventoryListing.storeLocation.id}}">
+                            <!--<tr onclick="rowClicked('size', this.id)" class="tableRow size sizeTable" id="size_{{selectedInventoryListing.id}}">-->    
+                                {% if selectedInventoryListing.quantity != 0 %}
+                                    <td>{{selectedInventoryListing.storeLocation.parentStore.sName}}</td>
+                                    <td>{{selectedInventoryListing.storeLocation.locationCity.city}}</td>
+                                    <td>{{selectedInventoryListing.storeLocation.address}}</td>
+                                    {% if selectedInventoryListing.sale == False %}
+                                        <td>${{selectedInventoryListing.regularPrice}}</td>
+                                    {% else %}
+                                        <td>Sale: ${{selectedInventoryListing.salePrice}} (Regular:${{selectedInventoryListing.regularPrice}})</td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+            {% else %}
+                <div class="citySelectBoxCtn" id="citySelectBoxCtnStoreLoc">
+                    <select id="citySelectBoxStoreLoc" class="citySelectBox">
+                            <option value="none">See All</option>
+                            {% for selectedCity in qCities %}
+                                <option value="{{selectedCity.id}}">{{selectedCity.country}}: {{selectedCity.city}}</option>
+                            {% endfor %}
+                    </select>
+                </div>
+
+                <div id="tableStoreLoc">
+                    <table>
+                        <tr>
+                            <th>Store</th>
+                            <th>City</th>
+                            <th>Address</th>
+                        </tr>
+                        {% for selectedStoreLoc in qStoreLocationListing %}
+                            <tr onclick="rowClicked('storeLoc', this.id)" class="tableRow storeLoc storeLocTable" id="storeLoc_{{selectedStoreLoc.id}}">
+                                <td>{{selectedStoreLoc.parentStore.sName}}</td>
+                                <td>{{selectedStoreLoc.locationCity}}</td>
+                                <td>{{selectedStoreLoc.address}}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% endif %}
+            
+        </div>        
+
+        <script>
+            //function to open only 1 info window at one time
+            function closeInfos(){
+                if(infos.length > 0){
+                    /* detach the info-window from the marker ... undocumented in the API docs */
+                    infos[0].set("marker", null);
+                    /* and close it */
+                    infos[0].close();
+                    /* blank the array */
+                    infos.length = 0;
+                }
+            }            
+
+
+            $('.storeMapLink').on('click', function(){
+                var selectedSizeID = 0;
+                var generatedID;
+
+
+                if (document.getElementById("tab").innerHTML == 'size'){
+                    selectedSizeID = $('#sizeSelectionSize option:selected').val();
+                    selectedSizeID = selectedSizeID.split("_")[1];                
+                }//selectedSizeID not used for Select Store Location Tab
+                else if (document.getElementById("tab").innerHTML = 'storeLocation'){
+
+                }
+
+                            
+                if (this.innerHTML == "Show Store Map"){
+                    this.innerHTML = "Hide Store Map";
+                    //document.getElementById(mapDivID).style.display="";
+                    //document.getElementById(geoLocMsg).style.display="";
+                    
+                    if (document.getElementById("tab").innerHTML == 'size'){
+                        document.getElementById("sizeMap").style.display = "";
+                        alert("tab: size, map shown");
+
+                        //test-------------------------------------------------
+                        testVar = "change";
+                        document.getElementById("testVar").innerHTML = testVar;
+                        //-----------------------------------------------------
+                        var StoreLocationIDs = [];
+                        $(".sizeTable").each(function(){
+                            generatedID = (this.id).split("_")[1];
+                            StoreLocationIDs.push(generatedID);
+                        });
+
+
+                        $.ajax({
+                            url: '/product/map/markersMapAjax/',
+                            data: {
+                                'StoreLocationIDs': StoreLocationIDs,
+                                'tab': 'size',
+                            },
+                            type: "GET",
+                            success: function(data){
+
+                                var marker;
+                                for (var i = 0; i < markers.length; i++){
+                                    markers[i].setMap(null);
+                                }
+                                markers = [];
+
+                                if (markerClusters){
+                                    markerClusters.clearMarkers();
+                                };
+                                
+                                var icon;
+                                if (data.qStoreLocation.length > 0){
+                                    for (var i = 0; i < data.qStoreLocation.length; i++){
+                                        var icon = {
+                                            url: data.qStorePicsToLoc[i],
+                                            scaledSize: new google.maps.Size(40, 40),
+                                        };
+                                        marker = new google.maps.Marker({
+                                            position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                            icon: icon,
+                                            map: mapSizeTab
+                                        });
+
+                                        var infowindow = new google.maps.InfoWindow();
+                                        var buttonVal = 'size_'+data.qStoreLocation[i].id;
+                                        alert('buttonVal: '+buttonVal);
+
+                                        var content = '<div id="content">' +       
+                                            '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                            '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +           
+                                            '<p> Phone: ' + data.qStoreLocation[i].phoneNum + '</p>' +
+                                            '<button class="infoWindowBtn" value=' + buttonVal + 
+                                            ' onclick="infoWindowBtn(this.value)"> Select This Store Location </button>'+
+                                            '</div>'; 
+
+                                        google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                            return function() {
+                                                closeInfos();
+                                                infowindow.setContent(content);
+                                                infowindow.open(mapStoreLocTab,marker);
+                                                infos[0]=infowindow;
+                                            };
+                                        })(marker,content,infowindow)); 
+
+                                        markers.push(marker);
+                                    };
+                                    markerClusters = new MarkerClusterer(mapSizeTab, markers,
+                                        {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                                    );
+                                };
+                                document.getElementById("userLocErrorMsgSize").style.display = "";
+                            },
+                            error: function(data){
+                                alert("Error loading graph, please refresh page");
+                            },
+                        });
+
+
+                    }
+                    else if (document.getElementById("tab").innerHTML == 'storeLocation'){
+                        document.getElementById("storeLocationMap").style.display = "";
+                        alert("tab: storeLoc, map shown");
+
+                        testVar = "change to storeLoc Tab";
+                        document.getElementById("testVar").innerHTML = testVar;
+
+                        var storeLocTabInventoryID = [];
+                        $(".storeLocTable").each(function(){
+                            generatedID = (this.id).split("_")[1];
+                            storeLocTabInventoryID.push(generatedID);
+                        });
+
+                        $.ajax({
+                            url: '/product/map/markersMapAjax/',
+                            data:{
+                                'storeLocTabInventoryID': storeLocTabInventoryID,
+                                'tab': 'storeLoc',
+                            },
+                            type: 'GET',
+                            success: function(data){
+                                var marker;
+                                for (var i = 0; i < markers.length; i++){
+                                    markers[i].setMap(null);
+                                }
+                                markers = [];
+
+                                if (markerClusters){
+                                    markerClusters.clearMarkers();
+                                };
+
+                                var icon;
+
+                                if (data.qStoreLocation.length > 0){
+                                    for (var i = 0; i < data.qStoreLocation.length; i++){
+                                        var icon = {
+                                            url: data.qStorePicsToLoc[i],
+                                            scaledSize: new google.maps.Size(40, 40),
+                                        };
+                                        marker = new google.maps.Marker({
+                                            position: new google.maps.LatLng(data.qStoreLocation[i].latitude, data.qStoreLocation[i].longitude),
+                                            icon: icon,
+                                            map: mapStoreLocTab
+                                        });
+
+                                        var infowindow = new google.maps.InfoWindow();
+                                        var buttonVal = 'storeLoc_'+data.qStoreLocation[i].id;
+                                        alert('buttonVal: '+buttonVal);
+
+                                        var content = '<div id="content">' +       
+                                            '<h5>' + data.qStoreNames[i] + '</h5>' + 
+                                            '<p> Address: ' + data.qStoreLocation[i].address + '</p>' +           
+                                            '<p> Phone: ' + data.qStoreLocation[i].phoneNum + '</p>' +
+                                            '<button class="infoWindowBtn" value=' + buttonVal + 
+                                            ' onclick="infoWindowBtn(this.value)"> Select This Store Location </button>'+
+                                            '</div>'; 
+                                            '</div>'; 
+
+                                        google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+                                            return function() {
+                                                closeInfos();
+                                                infowindow.setContent(content);
+                                                infowindow.open(mapStoreLocTab,marker);
+                                                infos[0]=infowindow;
+                                            };
+                                        })(marker,content,infowindow)); 
+
+                                        
+
+                                        markers.push(marker);
+
+                                    };
+                                    markerClusters = new MarkerClusterer(mapStoreLocTab, markers,
+                                        {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+                                    );
+                                    
+                                };
+                                
+                                document.getElementById("userLocErrorMsgStoreLoc").style.display = "";
+                            },
+                            error: function(data){
+                                alert("Error loading graph, please refresh page");
+                            }
+                        });
+
+                    }
+                }
+                else if (this.innerHTML == "Hide Store Map"){
+                    this.innerHTML = "Show Store Map"
+                    //document.getElementById(mapDivID).style.display="none";
+                    //document.getElementById(geoLocMsg).style.display="none";
+                    
+                    if (document.getElementById("tab").innerHTML == 'size'){
+                        document.getElementById("sizeMap").style.display = "none";
+                        document.getElementById("userLocErrorMsgSize").style.display = "none";
+                        alert("tav: size, map hidden");
+                    }
+                    else if (document.getElementById("tab").innerHTML == 'storeLocation'){
+                        document.getElementById("storeLocationMap").style.display = "none";
+                        document.getElementById("userLocErrorMsgStoreLoc").style.display = "none";
+                        alert("tab: storeLoc, map hidden");
+                    }
+
+
+
+                }
+
+            });
+
+            $('#citySelectBoxSize').on('change', function(){
+                alert("citySelectBoxSize changed");
+                alert("productID: "+ document.getElementById("productID").innerHTML);
+
+                //get city ID selected from city select box
+                var selectedCityID = $('#citySelectBoxSize option:selected').val();
+                
+                //get size ID from size selected in select box
+                var sizeSelectedID = $('#sizeSelectionSize option:selected').val();
+                sizeSelectedID = sizeSelectedID.split("_")[1];
+                
+
+                $.ajax({
+                    url: '/product/table/UPDATEfilterTableAjax/',
+                    data:{
+                        'productID': document.getElementById("productID").innerHTML,
+                        'tab': 'size',
+                        'sizeSelectedID': sizeSelectedID,
+                        'selectedCityID': selectedCityID,
+                    },
+                    type:"GET",
+                    success: function(data){
+                        
+                        $("#tableSize").html(data);
+                        alert("ajax success");
+                        if (document.getElementById("storeMapLink").innerHTML == "Hide Store Map"){
+                            document.getElementById("storeMapLink").innerHTML = "Show Store Map";
+                            document.getElementById("storeMapLink").click();
+                        };
+
+                        //hide add to chart button
+                        document.getElementById("addToChartBtnSize").style.display = "none";
+                    },
+                    error: function(data){
+                        alert("Erorr in table refresh, please refresh tab");
+                    }
+                });
+            });
+
+            $('#citySelectBoxStoreLoc').on('change', function(){
+                alert("citySelectBoxStoreLoc changed");
+                var selectedCityID = $('#citySelectBoxStoreLoc option:selected').val();
+            
+                $.ajax({
+                    url: '/product/table/UPDATEfilterTableAjax/',
+                    data: {
+                        'productID': document.getElementById("productID").innerHTML,
+                        'tab': 'storeLoc',
+                        'selectedCityID': selectedCityID,
+                    },
+                    type: "GET",
+                    success: function(data){
+                        $("#tableStoreLoc").html(data);
+                        if (document.getElementById("storeMapLink").innerHTML == "Hide Store Map"){
+                            document.getElementById("storeMapLink").innerHTML = "Show Store Map";
+                            document.getElementById("storeMapLink").click();
+                        };      
+
+                    },
+                    error: function(data){
+                        alert("Error in table refresh, please refresh tab");
+                    }
+                });
+            });
+
+            function infoWindowBtn (infoWindowBtnValue){
+                var tab = infoWindowBtnValue.split("_")[0];
+                if (tab == 'size'){
+                    var rows = document.getElementsByClassName("sizeTable");  
+                    for (var i=0; i<rows.length; i++){
+                        rows[i].classList.remove("selected");         
+                    }
+                    rowClicked('size', infoWindowBtnValue);
+                    
+                    //document.getElementById(infoWindowBtnValue).classList.add("selected");
+                    //document.getElementById("addToChartBtnSize").style.display = "";
+                }
+
+                else if (tab == 'storeLoc'){
+                    var rows = document.getElementsByClassName("storeLocTable") ;
+                    for (var i = 0; i < rows.length; i++){
+                        rows[i].classList.remove("selected");
+                    }
+                    //document.getElementById(infoWindowBtnValue).classList.add("selected");
+                    //alert(infoWindowBtnValue + " clicked");
+                    rowClicked('storeLoc', infoWindowBtnValue);
+                }
+
+
+
+            }
+
+        </script>
+
+    </body>
+
+</html>
