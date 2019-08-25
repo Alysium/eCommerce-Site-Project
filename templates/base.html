@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+	<head>
+		{%block cssFiles%} 
+		{%endblock%}
+		<link href='https://fonts.googleapis.com/css?family=Satisfy' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>		
+		<link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		
+		<link rel="stylesheet" type="text/css" href="{% static 'home/styleNav.css' %}" />
+		
+		<title>{%block title%}SMPLFY:Your Local Market{%endblock%}</title>
+		
+		<nav class="navbar navbar-default cusNav">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#topNavBar">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a href="{% url 'home:hIndex' %}"><img id="Logo" src="{% static 'home/images/Logo2.png' %}" alt="SMPLFY"></a>
+				</div>
+			
+				<div class="collapse navbar-collapse" id="topNavBar">
+					<ul class="nav navbar-nav cusNav">
+						<li>
+							<div class="dropdown">
+								<a id="dropbtn" href="{% url 'categories:cIndex' %}">CATEGORIES   <i class="fa fa-caret-down"></i></a>
+								<div class="dropdown-content">
+									{% for categorySelected in allCategory %}
+										<a class="categoryDropDown" href="{% url 'products:productListing' categorySelected.cName%}">{{categorySelected.cName}}</a>
+									{% endfor %}
+								</div>
+								
+							</div>
+						</li>
+						<li>
+							<a id="button" href="{% url 'store:sIndex' %}">STORES</a>
+						</li>
+						<li>
+							<div class="dropdown">
+								<a id="dropbtn" href="#">SALE   <i class="fa fa-caret-down"></i></a>
+								<div class="dropdown-content">
+									{% for categorySelected in allCategory %}
+										<a class="categoryDropDown" href="{% url 'sale:saleProductListing' categorySelected.cName%}">{{categorySelected.cName}}</a>
+									{% endfor %}									
+								</div>
+
+							</div>
+
+							<!--
+							<a id="button" href="#">SALE</a>
+							-->
+
+						</li>
+						<li>
+							<a id="button" href="#">SERVICES</a>
+						</li>
+						<li>
+							<a id="button" href="#">DELIVER</a>
+						</li>								
+						<li>
+							<a id="button" href="#">SELL</a>
+						</li>
+						<li>
+							<a id="button" href="{% url 'login' %}">MY ACCOUNT</a>
+						</li>
+					</ul>
+			
+			</div>
+		
+		</nav>
+	</head>
+	
+	
+	<body>
+		{% block body %}
+		{%endblock%}
+		<div class="bottomBanner">
+			<div class="bottomBannerContentCtn">
+
+
+				<div class="bottomBannerColumn col-xs-3 about">
+					<h3 class="bottomBannerTitle">About Us</h3>
+					<ul class="bottomBannerListing">
+						<li><a class="bottomBannerLink" href="#">About SMPLFY</a></li>
+						<li><a class="bottomBannerLink" href="#">Our Services</a></li>
+						<li><a class="bottomBannerLink" href="#">How it Works</a></li>
+					</ul>
+				</div>
+		
+				<div class="bottomBannerColumn col-xs-3 customerService">
+					<h3 class="bottomBannerTitle">Customer Service</h3>
+					<ul class="bottomBannerListing">
+						<li><a class="bottomBannerLink" href="#">Your Account</a></li>
+						<li><a class="bottomBannerLink" href="#">Your Purchases</a></li>
+						<li><a class="bottomBannerLink" href="#">Delivery</a></li>
+						<li><a class="bottomBannerLink" href="#">Help</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		
+
+
+	</body>
+	
+	
+</html>
+	
+	
+	
+	
+	
+	
+	
+	

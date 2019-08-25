@@ -1,0 +1,8 @@
+{% extends 'base_authentication.html' %}
+
+{% block content %}
+  <h2>Welcome, {{ user.get_full_name }} <small>{{ user.username }}</small>!</h2>
+  <p>Your birth date: {{ user.profile.birth_date }}</p>
+  <p>Your email: {{ user.email }}</p>
+  <p>Your postal code: {{ user.profile.postal_code }}</p>  
+{% endblock %}

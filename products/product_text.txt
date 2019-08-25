@@ -1,0 +1,3 @@
+{{ object.generalItem.shoeName }}
+{{ object.additionalName }}
+{{ object.colorway }}
